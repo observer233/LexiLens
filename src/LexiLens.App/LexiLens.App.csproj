@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>LexiLens</AssemblyName>
+    <RootNamespace>LexiLens.App</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Game screen translation overlay for language learners</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../LexiLens.Core/LexiLens.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,24 @@
+<Window x:Class="LexiLens.App.Views.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LexiLens 悬浮翻译" Width="760" MinWidth="400" MinHeight="160"
+        SizeToContent="Height" MaxHeight="600" WindowStyle="None" ResizeMode="CanResizeWithGrip"
+        AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False" ShowActivated="False" Style="{StaticResource {x:Type Window}}">
+  <Border Background="#F214181F" BorderBrush="#70687562" BorderThickness="1" CornerRadius="12" Padding="20,14,20,18">
+    <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <Grid MouseLeftButtonDown="DragHeader" Margin="0,0,0,10" Background="Transparent">
+        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <TextBlock x:Name="StatusLabel" Text="LEXILENS  /  EN → 简体中文" Foreground="#E9BD82" FontSize="11" VerticalAlignment="Center" />
+        <Button x:Name="LockButton" Grid.Column="1" Content="锁定穿透  Ctrl+Alt+L" Padding="9,5" FontSize="10" Click="ToggleLock" />
+      </Grid>
+      <ScrollViewer Grid.Row="1" MaxHeight="450" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <TextBlock x:Name="OriginalText" Foreground="#D7DBE2" FontSize="21" LineHeight="32" Margin="0,0,0,10" />
+          <TextBlock x:Name="TranslationText" Foreground="#FFF0D9" FontSize="21" LineHeight="32" />
+        </StackPanel>
+      </ScrollViewer>
+      <TextBlock Grid.Row="2" x:Name="HintText" Text="拖动顶部移动 · 点击英文查词 · Ctrl+Alt+H 隐藏" Foreground="#89929F" FontSize="10" Margin="0,12,0,0" />
+    </Grid>
+  </Border>
+</Window>

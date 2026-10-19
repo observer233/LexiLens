@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+.tools/
+artifacts/
+TestResults/
+*.user
+*.suo
+*.log
+settings.json
+vocabulary.json
+.env
+.env.*
+!.env.example

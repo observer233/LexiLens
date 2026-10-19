@@ -1,0 +1,21 @@
+name: Bug report / 问题反馈
+description: Report a reproducible problem in LexiLens
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境
+      description: Windows 版本、显示器缩放比例、LexiLens 版本、翻译服务；涉及游戏时填写窗口模式。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤与实际结果
+      description: 说明如何复现，以及期望发生什么。请勿附上密钥、账号或私人对话。
+    validations:
+      required: true
+  - type: textarea
+    id: message
+    attributes:
+      label: 界面提示与补充信息
