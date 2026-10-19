@@ -1,7 +1,7 @@
 param(
     [string]$DotnetPath = 'dotnet',
     [ValidatePattern('^v?\d+\.\d+\.\d+([-.][a-zA-Z0-9.]+)?$')]
-    [string]$Version = 'v0.5.0'
+    [string]$Version = 'v0.5.1'
 )
 $ErrorActionPreference = 'Stop'
 $taskRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))

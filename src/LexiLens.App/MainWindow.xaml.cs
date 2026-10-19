@@ -277,7 +277,7 @@ public partial class MainWindow : Window
         var source = update.Source;
         var translation = update.IsBusy ? "翻译中…" : update.Error ?? update.Translation ?? "";
         if (state != null) { state.Source = source; state.Translation = translation; }
-        var overlay = state?.Overlay ?? _overlay;
+        var overlay = state != null ? state.Overlay : _overlay;
         overlay?.SetContent(source, translation, update.Error != null ? "翻译失败" : update.IsBusy ? "翻译中" : update.IsPrevious ? "稍早字幕 · 可在对白回看中查看" : "实时翻译");
         if (!update.IsBusy && update.Translation != null) overlay?.AvoidOverlaps(AllOverlays());
         if (state != null && state.Area.Id != SelectedArea?.Id)
@@ -739,7 +739,7 @@ public partial class MainWindow : Window
     {
         var dialog = new SaveFileDialog { Filter = "诊断报告|*.json", FileName = "LexiLens-diagnostic-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json" };
         if (dialog.ShowDialog() != true) return;
-        try { File.WriteAllText(dialog.FileName, _journal.Export(_settings, "0.5.0"), new UTF8Encoding(false)); MessageLabel.Text = "诊断报告已导出。"; }
+        try { File.WriteAllText(dialog.FileName, _journal.Export(_settings, "0.5.1"), new UTF8Encoding(false)); MessageLabel.Text = "诊断报告已导出。"; }
         catch (Exception ex) { MessageLabel.Text = ex.Message; }
     }
 
@@ -749,7 +749,7 @@ public partial class MainWindow : Window
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_journal.DirectoryPath) { UseShellExecute = true });
     }
 
-    internal string ExportDiagnosticReport() => _journal.Export(_settings, "0.5.0");
+    internal string ExportDiagnosticReport() => _journal.Export(_settings, "0.5.1");
     internal void RecordForDiagnostics(PipelineEvent item) => Record(item);
     internal double[] DiagnosticColumnWidths() => LogGrid.Columns.Select(x => x.ActualWidth).ToArray();
 }

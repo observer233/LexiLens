@@ -4,9 +4,9 @@ Windows 屏幕翻译工具。选择游戏窗口或字幕区域，在悬浮窗中
 
 [下载 Windows 版](https://github.com/observer233/LexiLens/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [卡住问题分析](docs/BUG_ANALYSIS.md) · [AI 平台配置](docs/AI_PLATFORMS.md) · [English](README.en.md)
 
-![LexiLens v0.5.0 多区域界面（固定练习样例，模拟译文）](docs/images/main.png)
+![LexiLens v0.5.1 多区域界面（固定练习样例，模拟译文）](docs/images/main.png)
 
-## v0.5.0
+## v0.5.1
 
 - **快速字幕**：默认每 150ms 采样，系统 OCR 优先，首次识别即提交；清晰优先模式保留增强字体识别。扫描间隔包含识别耗时，不再识别完额外等一轮。
 - **多个选区**：最多 4 个区域。点击“添加框选”继续添加，可命名、重选、移除；每个区域有独立悬浮框，默认放在选区旁，尽量避开其他译文框，位置与宽度保存到本机。
@@ -16,7 +16,7 @@ Windows 屏幕翻译工具。选择游戏窗口或字幕区域，在悬浮窗中
 
 ## 开始使用
 
-1. 下载 `LexiLens-v0.5.0-win-x64.zip`，完整解压运行 `LexiLens.exe`。自带 .NET 和 OCR 模型，Windows x64，建议 Windows 11。
+1. 下载 `LexiLens-v0.5.1-win-x64.zip`，完整解压运行 `LexiLens.exe`。自带 .NET 和 OCR 模型，Windows x64，建议 Windows 11。
 2. 首次引导中点击“选择服务”。无密钥可用 MyMemory；已有智谱等额度时选择 AI 平台，粘贴标准 API Key，测试并保存。
 3. 点击“选择窗口”，移到游戏上，出现边框后单击；或点击“手动框选”选择任务/字幕区域。Esc 取消。
 4. 先点击“翻译一次”，确认原文与译文；再点击“开始连续翻译”。

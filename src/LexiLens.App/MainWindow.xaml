@@ -5,7 +5,7 @@
   <Border Background="#EDF0F4" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0" Padding="14,22">
    <DockPanel>
     <StackPanel DockPanel.Dock="Top" Margin="12,0,0,26"><TextBlock Text="LexiLens" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="屏幕翻译" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,5,0,0"/></StackPanel>
-    <StackPanel DockPanel.Dock="Bottom"><Button Content="使用引导" Click="ShowGuide" Style="{StaticResource Nav}"/><TextBlock Text="v0.5.0" Foreground="{StaticResource Muted}" FontSize="11" Margin="14,12,0,0"/></StackPanel>
+    <StackPanel DockPanel.Dock="Bottom"><Button Content="使用引导" Click="ShowGuide" Style="{StaticResource Nav}"/><TextBlock Text="v0.5.1" Foreground="{StaticResource Muted}" FontSize="11" Margin="14,12,0,0"/></StackPanel>
     <StackPanel><Button x:Name="LiveNav" Content="翻译" Click="ShowLive" Style="{StaticResource Nav}" Background="#DFEAF8"/><Button x:Name="ReplayNav" Content="对白回看" Click="ShowReplay" Style="{StaticResource Nav}"/><Button x:Name="WordsNav" Content="生词本" Click="ShowWords" Style="{StaticResource Nav}"/><Button x:Name="SettingsNav" Content="设置" Click="ShowSettings" Style="{StaticResource Nav}"/><Button x:Name="DiagnosticsNav" Content="诊断与日志" Click="ShowDiagnostics" Style="{StaticResource Nav}"/></StackPanel>
    </DockPanel>
   </Border>

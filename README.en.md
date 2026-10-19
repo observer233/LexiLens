@@ -4,9 +4,9 @@ A Windows screen translation tool with a bilingual overlay and an English vocabu
 
 [Download](https://github.com/observer233/LexiLens/releases/latest) · [中文](README.md) · [Setup](docs/USER_GUIDE.md) · [Bug analysis](docs/BUG_ANALYSIS.md)
 
-![LexiLens v0.5.0](docs/images/main.png)
+![LexiLens v0.5.1](docs/images/main.png)
 
-## v0.5.0
+## v0.5.1
 
 - Fast subtitles: 150ms capture cadence, Windows OCR first, immediate submission on the first recognized frame. Accuracy mode retains the enhanced OCR workflow.
 - Up to four named capture areas with separate movable overlays, automatic initial placement near each crop, collision avoidance and saved positions.
