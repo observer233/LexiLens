@@ -18,8 +18,8 @@ internal static class RegionPicker
         foreach (var monitor in NativeMethods.Monitors())
         {
             var canvas = new Canvas { Background = new SolidColorBrush(Color.FromArgb(45, 0, 0, 0)) };
-            var frame = new Rectangle { Stroke = new SolidColorBrush(Color.FromRgb(233, 189, 130)), StrokeThickness = 2, Fill = new SolidColorBrush(Color.FromArgb(32, 233, 189, 130)), Visibility = Visibility.Hidden };
-            var label = new TextBlock { Text = "拖动框选任务或字幕区域 · Esc 取消 · 每次选择一块屏幕", Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(26, 29, 34)), Padding = new Thickness(18), FontSize = 17 };
+            var frame = new Rectangle { Stroke = new SolidColorBrush(Color.FromRgb(40, 140, 240)), StrokeThickness = 2, Fill = new SolidColorBrush(Color.FromArgb(24, 0, 120, 215)), Visibility = Visibility.Hidden };
+            var label = new TextBlock { Text = "拖动选择区域 · Esc 取消", Foreground = Brushes.White, Background = new SolidColorBrush(Color.FromRgb(30, 40, 55)), Padding = new Thickness(14), FontSize = 15 };
             Canvas.SetLeft(label, 32); Canvas.SetTop(label, 32);
             canvas.Children.Add(label); canvas.Children.Add(frame);
             var window = new Window

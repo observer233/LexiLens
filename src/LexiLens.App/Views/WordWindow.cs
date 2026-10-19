@@ -14,7 +14,7 @@ internal sealed class WordWindow : Window
         Title = "LexiLens · " + word; Width = 450; Height = 370; Topmost = true;
         WindowStartupLocation = WindowStartupLocation.CenterScreen; ResizeMode = ResizeMode.CanMinimize;
         var panel = new StackPanel { Margin = new Thickness(26) };
-        panel.Children.Add(new TextBlock { Text = word, FontSize = 30, Foreground = new SolidColorBrush(Color.FromRgb(233, 189, 130)), Margin = new Thickness(0, 0, 0, 12) });
+        panel.Children.Add(new TextBlock { Text = word, FontSize = 30, Foreground = (Brush)FindResource("Accent"), Margin = new Thickness(0, 0, 0, 12) });
         var meaning = new TextBox { Text = GameGlossary.Lookup(word) ?? "", TextWrapping = TextWrapping.Wrap, Height = 64, AcceptsReturn = true };
         panel.Children.Add(meaning);
         var hint = new TextBlock { Text = meaning.Text.Length > 0 ? "内置游戏词汇释义 · 可编辑" : "正在通过当前翻译服务查词…", Foreground = Brushes.DarkGray, FontSize = 11, Margin = new Thickness(0, 7, 0, 14) };

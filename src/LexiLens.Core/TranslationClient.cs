@@ -8,6 +8,7 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings, str
 {
     private readonly CloudTranslation _cloud = new(http, settings, apiKey);
     public CloudTranslation Cloud => _cloud;
+    public Action<PipelineEvent>? Progress { get => _cloud.Progress; set => _cloud.Progress = value; }
     private readonly Dictionary<string, string> _cache = new(StringComparer.Ordinal);
     private readonly Queue<string> _order = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -19,7 +20,11 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings, str
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (_cache.TryGetValue(text, out var cached)) return cached;
+            if (_cache.TryGetValue(text, out var cached))
+            {
+                Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Skipped, "TRANSLATION_CACHE", "使用已有译文", Characters: text.Length));
+                return cached;
+            }
             var result = settings.Provider switch
             {
                 TranslationProvider.MyMemory => await MyMemoryAsync(text, cancellationToken),
@@ -43,7 +48,10 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings, str
         {
             var pair = Uri.EscapeDataString($"{settings.SourceLanguage}|{settings.TargetLanguage}");
             var url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(part)}&langpair={pair}";
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Running, "API_REQUEST_SENT", "MyMemory · 请求已发送", Characters: part.Length));
             using var response = await http.GetAsync(url, ct);
+            Progress?.Invoke(new(PipelineStage.Translation, response.IsSuccessStatusCode ? PipelineState.Success : PipelineState.Error, "HTTP_" + (int)response.StatusCode, "MyMemory · HTTP " + (int)response.StatusCode, watch.ElapsedMilliseconds));
             response.EnsureSuccessStatusCode();
             using var data = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
             var root = data.RootElement;
@@ -57,6 +65,8 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings, str
     private async Task<string> OllamaAsync(string text, CancellationToken ct)
     {
         var endpoint = ValidateOllamaEndpoint(settings.OllamaEndpoint);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Running, "API_REQUEST_SENT", "Ollama · 请求已发送", Characters: text.Length));
         using var response = await http.PostAsJsonAsync(new Uri(endpoint, "api/chat"), new
         {
             model = settings.OllamaModel,
@@ -68,6 +78,7 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings, str
             },
             options = new { temperature = 0.1 }
         }, ct);
+        Progress?.Invoke(new(PipelineStage.Translation, response.IsSuccessStatusCode ? PipelineState.Success : PipelineState.Error, "HTTP_" + (int)response.StatusCode, "Ollama · HTTP " + (int)response.StatusCode, watch.ElapsedMilliseconds));
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Ollama 返回 {(int)response.StatusCode}。确认服务已启动且已下载模型 {settings.OllamaModel}。");
         using var data = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);

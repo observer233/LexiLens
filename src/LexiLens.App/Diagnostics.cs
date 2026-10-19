@@ -93,6 +93,10 @@ internal static class Diagnostics
 
                 var practice = new PracticeWindow { Topmost = true }; practice.Show(); practice.Activate();
                 await Task.Delay(500);
+                var practiceHandle = new WindowInteropHelper(practice).Handle;
+                var snapped = await WindowPicker.SelectAsync(practiceHandle, picker => Render(picker, Path.Combine(directory, "window-picker.png")));
+                report["windowSnapSelectionPassed"] = snapped?.IsValid == true && NativeMethods.IsOnDesktop(snapped)
+                    && snapped.Width > 300 && snapped.Height > 200;
                 var region = practice.SubtitleRegion();
                 using var source = new ScreenTextSource(region, "en-US", PracticeWindow.Samples[0].Text);
                 var captured = await source.ReadAsync(CancellationToken.None);
@@ -106,6 +110,32 @@ internal static class Diagnostics
                 report["liveSessionPassed"] = live.Source.Contains("ancient relic", StringComparison.OrdinalIgnoreCase)
                     && live.Translation.Any(c => c >= '\u4E00' && c <= '\u9FFF')
                     && !live.Translation.Contains("未完成");
+                var once = await window.VerifyLiveSessionAsync(region, timeout.Token, once: true);
+                report["singleTranslationPassed"] = once.Source == live.Source && once.Translation == live.Translation;
+                var worker = new OcrWorker(stallForDiagnostics: true, initialTimeoutMs: 3000);
+                var faultEvents = new List<PipelineEvent>();
+                using (var stalledSource = new ScreenTextSource(region, "en-US", PracticeWindow.Samples[0].Text, workerFactory: () => worker)
+                { Progress = item => { lock (faultEvents) faultEvents.Add(item); window.RecordForDiagnostics(item); } })
+                {
+                    var recovered = await stalledSource.ReadAsync(CancellationToken.None);
+                    report["ocrTimeoutFallbackPassed"] = worker.WasConnected && worker.WasTerminated && recovered.Contains("ancient relic", StringComparison.OrdinalIgnoreCase)
+                        && stalledSource.LastRecognition?.Engine.StartsWith("Windows OCR", StringComparison.Ordinal) == true
+                        && faultEvents.Any(x => x.Code == "OCR_TIMEOUT_FALLBACK");
+                }
+                using (var cancelledWorker = new OcrWorker(stallForDiagnostics: true))
+                using (var cancel = new CancellationTokenSource(150))
+                {
+                    try { await cancelledWorker.ReadAsync(new byte[80 * 40 * 4], 80, 40, OcrImageMode.Auto, cancel.Token); }
+                    catch (OperationCanceledException) when (cancel.IsCancellationRequested) { }
+                    report["ocrWorkerCancellationPassed"] = cancelledWorker.WasTerminated;
+                }
+                window.RenderLogForDiagnostics(); await Task.Delay(250); Render(window, Path.Combine(directory, "diagnostics.png"));
+                report["diagnosticColumnWidths"] = window.DiagnosticColumnWidths();
+                report["diagnosticLayoutPassed"] = window.DiagnosticColumnWidths().Length == 6 && window.DiagnosticColumnWidths().Take(3).All(x => x >= 50);
+                var exported = window.ExportDiagnosticReport();
+                File.WriteAllText(Path.Combine(directory, "diagnostic-export.json"), exported);
+                report["diagnosticExportPassed"] = exported.Contains("OCR_TIMEOUT_FALLBACK", StringComparison.Ordinal) && !exported.Contains(dummyKey, StringComparison.Ordinal)
+                    && !exported.Contains(PracticeWindow.Samples[0].Text, StringComparison.Ordinal);
                 practice.Close();
             }
             report["success"] = report.GetValueOrDefault("desktopCaptureOcrPassed") is true
@@ -121,6 +151,11 @@ internal static class Diagnostics
             report["success"] = report["success"] is true && report.GetValueOrDefault("localOcrFontDiagnostics") is true
                 && report.GetValueOrDefault("deepseekCredentialUpgrade") is true
                 && (report.GetValueOrDefault("desktopCaptureOcrEngine") as string)?.Contains("PaddleOCR", StringComparison.Ordinal) == true;
+            report["success"] = report["success"] is true && report.GetValueOrDefault("windowSnapSelectionPassed") is true
+                && report.GetValueOrDefault("ocrTimeoutFallbackPassed") is true && report.GetValueOrDefault("ocrWorkerCancellationPassed") is true
+                && report.GetValueOrDefault("diagnosticExportPassed") is true;
+            report["success"] = report["success"] is true && report.GetValueOrDefault("singleTranslationPassed") is true;
+            report["success"] = report["success"] is true && report.GetValueOrDefault("diagnosticLayoutPassed") is true;
         }
         catch (Exception ex) { report["error"] = ex.ToString(); report["success"] = false; }
         finally
@@ -128,6 +163,17 @@ internal static class Diagnostics
             File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
             window.Close();
         }
+    }
+
+    internal static async Task RunUiAsync(MainWindow window, string directory)
+    {
+        Directory.CreateDirectory(directory);
+        window.RecordForDiagnostics(new(PipelineStage.Capture, PipelineState.Success, "CAPTURE_OK", "诊断样例 · 截图完成", 8));
+        window.RecordForDiagnostics(new(PipelineStage.Ocr, PipelineState.Warning, "OCR_TIMEOUT_FALLBACK", "诊断样例 · 增强识别超时，已切换 Windows OCR", 15000));
+        window.RenderLogForDiagnostics(); await Task.Delay(350);
+        Render(window, Path.Combine(directory, "diagnostics.png"));
+        File.WriteAllText(Path.Combine(directory, "ui-report.json"), JsonSerializer.Serialize(window.DiagnosticColumnWidths()));
+        window.Close();
     }
 
     private sealed class DiagnosticHandler : HttpMessageHandler

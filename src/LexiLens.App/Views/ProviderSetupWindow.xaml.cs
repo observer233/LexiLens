@@ -22,11 +22,13 @@ public partial class ProviderSetupWindow : Window
     private CloudPreset? _preset;
     private string? _loadedScope;
     private bool _loading, _busy;
+    private readonly Action<PipelineEvent>? _progress;
     internal AppSettings? SelectedSettings { get; private set; }
 
-    internal ProviderSetupWindow(AppSettings settings, HttpClient http, CredentialVault vault)
+    internal ProviderSetupWindow(AppSettings settings, HttpClient http, CredentialVault vault, Action<PipelineEvent>? progress = null)
     {
         _original = settings; _http = http; _vault = vault;
+        _progress = progress;
         _drafts = new(settings.CloudProfiles);
         InitializeComponent();
         CloudModelCombo.AddHandler(TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) =>
@@ -91,8 +93,8 @@ public partial class ProviderSetupWindow : Window
         _preset = ServiceCombo.SelectedItem as CloudPreset;
         if (_preset == null) { _loading = false; return; }
         var profile = _drafts.GetValueOrDefault(_preset.Id) ?? _preset.DefaultProfile;
-        PolicyText.Text = _preset.Name + " · " + _preset.CategoryLabel + "\n" + _preset.Notice;
-        KeyLabel.Text = "3  粘贴自己的 " + _preset.KeyLabel;
+        PolicyText.Text = _preset.Notice;
+        KeyLabel.Text = _preset.KeyLabel;
         AccountPanel.Visibility = _preset.NeedsAccountId ? Visibility.Visible : Visibility.Collapsed;
         AccountInput.Text = profile.AccountId;
         CloudEndpointInput.Text = profile.Endpoint;
@@ -151,7 +153,7 @@ public partial class ProviderSetupWindow : Window
         if (_preset == null) return;
         var needs = ProviderCatalog.NeedsCreditAcknowledgement(_preset, CurrentProfile());
         CreditCheck.Visibility = needs ? Visibility.Visible : Visibility.Collapsed;
-        ModelNotice.Text = needs ? "当前选择的免费资格未核验，请确认控制台额度。读取到模型不代表拥有调用权限或免费资格。" : "这是内置的免费档候选；实际是否免费仍取决于账号档位和平台当前政策。";
+        ModelNotice.Text = needs ? "使用账号已有额度，按平台规则计费。" : "免费档候选，额度和限流以账号为准。";
     }
 
     private AppSettings BuildSettings()
@@ -181,7 +183,7 @@ public partial class ProviderSetupWindow : Window
         {
             UpdateModelNotice();
             var settings = BuildSettings(); var key = CurrentKey(settings);
-            var translator = new TranslationClient(_http, settings, key);
+            var translator = new TranslationClient(_http, settings, key) { Progress = _progress };
             if (settings.Provider == TranslationProvider.Cloud) translator.Cloud.Validate(true);
             ResultText.Text = "正在翻译固定测试句，请稍候…";
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_closed.Token);
@@ -201,7 +203,7 @@ public partial class ProviderSetupWindow : Window
             }
         }
         catch (OperationCanceledException) when (_closed.IsCancellationRequested) { }
-        catch (Exception ex) { ResultText.Text = "连接未成功：" + LiveSession.FriendlyError(ex); }
+        catch (Exception ex) { ResultText.Text = "连接未成功：" + LiveSession.FriendlyError(ex); _progress?.Invoke(new(PipelineStage.Translation, PipelineState.Error, ex is CloudApiException cloud ? cloud.Code : "API_TEST_FAILED", LiveSession.FriendlyError(ex))); }
         finally { SetBusy(false); }
     }
     private void SetBusy(bool busy)

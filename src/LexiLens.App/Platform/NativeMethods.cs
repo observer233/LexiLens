@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 using LexiLens.Core;
@@ -19,6 +20,14 @@ internal static class NativeMethods
     [DllImport("user32.dll")] internal static extern bool EnumDisplayMonitors(nint dc, nint clip, MonitorCallback callback, nint data);
     [DllImport("user32.dll")] internal static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] internal static extern bool GetWindowRect(nint hwnd, out Rect rect);
+    internal delegate bool WindowCallback(nint hwnd, nint data);
+    [DllImport("user32.dll")] internal static extern bool EnumWindows(WindowCallback callback, nint data);
+    [DllImport("user32.dll")] internal static extern bool IsWindowVisible(nint hwnd);
+    [DllImport("user32.dll")] internal static extern bool IsIconic(nint hwnd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern int GetWindowText(nint hwnd, StringBuilder text, int count);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern int GetClassName(nint hwnd, StringBuilder text, int count);
+    [DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(nint hwnd, uint attribute, out Rect value, int size);
+    [DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(nint hwnd, uint attribute, out int value, int size);
     [DllImport("user32.dll")] internal static extern bool SetWindowPos(nint hwnd, nint after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll", SetLastError = true)] internal static extern bool SetWindowDisplayAffinity(nint hwnd, uint affinity);
     [DllImport("user32.dll", SetLastError = true)] internal static extern bool RegisterHotKey(nint hwnd, int id, uint modifiers, uint key);
@@ -54,6 +63,29 @@ internal static class NativeMethods
 
     internal static bool IsOnDesktop(CaptureRegion region) => Monitors().Any(m =>
         region.X >= m.Left && region.Y >= m.Top && (long)region.X + region.Width <= m.Right && (long)region.Y + region.Height <= m.Bottom);
+
+    internal sealed record WindowTarget(nint Handle, string Title, CaptureRegion Region);
+    internal static IReadOnlyList<WindowTarget> WindowTargets()
+    {
+        var targets = new List<WindowTarget>();
+        EnumWindows((hwnd, _) =>
+        {
+            if (!IsWindowVisible(hwnd) || IsIconic(hwnd)) return true;
+            if (DwmGetWindowAttribute(hwnd, 14, out int cloaked, 4) == 0 && cloaked != 0) return true;
+            var className = new StringBuilder(256); GetClassName(hwnd, className, className.Capacity);
+            if (className.ToString() is "Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd") return true;
+            var title = new StringBuilder(512); GetWindowText(hwnd, title, title.Capacity);
+            if (title.Length == 0) return true;
+            if (DwmGetWindowAttribute(hwnd, 9, out Rect bounds, 16) != 0 && !GetWindowRect(hwnd, out bounds)) return true;
+            // Clip windows partly outside the desktop to the visible monitor.
+            var visible = Monitors().Select(m => new CaptureRegion(Math.Max(m.Left, bounds.Left), Math.Max(m.Top, bounds.Top),
+                Math.Min(m.Right, bounds.Right) - Math.Max(m.Left, bounds.Left), Math.Min(m.Bottom, bounds.Bottom) - Math.Max(m.Top, bounds.Top)))
+                .Where(r => r.IsValid).OrderByDescending(r => (long)r.Width * r.Height).FirstOrDefault();
+            if (visible != null) targets.Add(new(hwnd, title.ToString(), visible));
+            return true;
+        }, 0);
+        return targets;
+    }
 
     internal static byte[] Capture(CaptureRegion region, int maxDimension, out int width, out int height)
     {

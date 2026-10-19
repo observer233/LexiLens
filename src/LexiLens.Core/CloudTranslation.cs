@@ -5,7 +5,10 @@ using System.Text.Json;
 
 namespace LexiLens.Core;
 
-public sealed class CloudApiException(string message) : Exception(message);
+public sealed class CloudApiException(string message, string code = "API_ERROR") : Exception(message)
+{
+    public string Code { get; } = code;
+}
 
 public sealed class CloudTranslation(HttpClient http, AppSettings settings, string apiKey)
 {
@@ -16,6 +19,7 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
 
     public int RequestsSent { get; private set; }
     public long ReportedTokens { get; private set; }
+    public Action<PipelineEvent>? Progress { get; set; }
 
     public async Task<string> TranslateAsync(string text, CancellationToken ct)
     {
@@ -92,7 +96,10 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
             Authenticate(request);
             _lastRequest = DateTimeOffset.UtcNow;
             RequestsSent++;
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Running, "API_REQUEST_SENT", $"{_preset.Name} · 请求已发送", Characters: text.Length));
             using var response = await http.SendAsync(request, ct);
+            Progress?.Invoke(new(PipelineStage.Translation, response.IsSuccessStatusCode ? PipelineState.Success : PipelineState.Error, "HTTP_" + (int)response.StatusCode, $"{_preset.Name} · HTTP {(int)response.StatusCode}", timer.ElapsedMilliseconds));
             CheckStatus(response);
             using var data = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
             return ParseTranslation(data.RootElement);
@@ -180,7 +187,7 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or HttpStatusCode.PaymentRequired or HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             _blockedReason = $"{_preset.Name}：{message} 修改设置并保存后可重试。";
         // Do not display server bodies: some services echo credentials or input.
-        throw new CloudApiException($"{_preset.Name}：{message}");
+        throw new CloudApiException($"{_preset.Name} · HTTP {(int)response.StatusCode}：{message}", "HTTP_" + (int)response.StatusCode);
     }
 
     private string ParseTranslation(JsonElement root)

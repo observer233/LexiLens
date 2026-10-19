@@ -1,138 +1,59 @@
-<Window x:Class="LexiLens.App.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="LexiLens · 游戏里的语言伙伴" Width="1140" Height="790" MinWidth="980" MinHeight="680"
-        WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
-  <Grid Background="{StaticResource Bg}">
-    <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition/></Grid.ColumnDefinitions>
-    <Border Background="#171A1E" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0" Padding="18,28">
-      <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,28">
-          <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <Border Background="{StaticResource Accent}" CornerRadius="9" Width="33" Height="33" Margin="0,0,9,0"><TextBlock Text="L" Foreground="#211A12" FontSize="23" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-            <TextBlock Text="LexiLens" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          </StackPanel>
-          <TextBlock Text="PLAY. READ. LEARN." Foreground="{StaticResource Muted}" FontSize="9" Margin="2,4,0,0"/>
-        </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom">
-          <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,15"/>
-          <TextBlock Text="为每一次看懂而设计" FontSize="11" Foreground="{StaticResource Muted}"/>
-          <TextBlock Text="v0.3.0  /  Windows" FontSize="10" Foreground="#66707D" Margin="0,7,0,0"/>
-        </StackPanel>
-        <StackPanel>
-          <Button x:Name="LiveNav" Content="◉   实时翻译" Style="{StaticResource Nav}" Click="ShowLive" Background="#2B2B28" Foreground="{StaticResource Accent}"/>
-          <Button x:Name="WordsNav" Content="▤   我的生词本" Style="{StaticResource Nav}" Click="ShowWords"/>
-          <Button x:Name="SettingsNav" Content="⚙   偏好设置" Style="{StaticResource Nav}" Click="ShowSettings"/>
-          <Border Height="1" Background="{StaticResource Line}" Margin="8,20,8,16"/>
-          <Button Content="↗   打开练习场" Style="{StaticResource Nav}" Click="OpenPractice" Foreground="{StaticResource Muted}"/>
-        </StackPanel>
-      </DockPanel>
+<Window x:Class="LexiLens.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="LexiLens" Width="1160" Height="820" MinWidth="980" MinHeight="720" WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
+ <Grid Background="{StaticResource Bg}">
+  <Grid.ColumnDefinitions><ColumnDefinition Width="174"/><ColumnDefinition/></Grid.ColumnDefinitions>
+  <Border Background="#EDF0F4" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0" Padding="14,22">
+   <DockPanel>
+    <StackPanel DockPanel.Dock="Top" Margin="12,0,0,26"><TextBlock Text="LexiLens" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="屏幕翻译" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,5,0,0"/></StackPanel>
+    <StackPanel DockPanel.Dock="Bottom"><Button Content="使用引导" Click="ShowGuide" Style="{StaticResource Nav}"/><TextBlock Text="v0.4.0" Foreground="{StaticResource Muted}" FontSize="11" Margin="14,12,0,0"/></StackPanel>
+    <StackPanel><Button x:Name="LiveNav" Content="翻译" Click="ShowLive" Style="{StaticResource Nav}" Background="#DFEAF8"/><Button x:Name="WordsNav" Content="生词本" Click="ShowWords" Style="{StaticResource Nav}"/><Button x:Name="SettingsNav" Content="设置" Click="ShowSettings" Style="{StaticResource Nav}"/><Button x:Name="DiagnosticsNav" Content="诊断与日志" Click="ShowDiagnostics" Style="{StaticResource Nav}"/></StackPanel>
+   </DockPanel>
+  </Border>
+  <Grid Grid.Column="1" Margin="26,22,26,16">
+   <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Grid x:Name="LivePage">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+    <Grid Margin="0,0,0,18"><TextBlock Text="屏幕翻译" FontSize="25" FontWeight="SemiBold"/><TextBlock x:Name="StateLabel" Text="未开始" Foreground="{StaticResource Muted}" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+    <Border x:Name="GuidePanel" Grid.Row="1" Background="#EAF2FC" BorderBrush="#CEDFF4" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+     <StackPanel><Grid><TextBlock Text="首次使用" FontWeight="SemiBold"/><Button Content="收起" Click="DismissGuide" HorizontalAlignment="Right" FontSize="11" Padding="8,2" MinHeight="24"/></Grid>
+      <UniformGrid Columns="3" Margin="0,8,0,0"><StackPanel Margin="0,0,12,0"><TextBlock x:Name="GuideService" Text="1. 连接翻译服务"/><Button Content="选择服务" Click="SetupProvider" Margin="0,8,0,0" HorizontalAlignment="Left"/></StackPanel><StackPanel Margin="0,0,12,0"><TextBlock x:Name="GuideRegion" Text="2. 选择游戏窗口或字幕"/><Button Content="选择窗口" Click="PickWindow" Margin="0,8,0,0" HorizontalAlignment="Left"/></StackPanel><StackPanel><TextBlock Text="3. 先试一次，再连续翻译"/><Button Content="打开练习窗口" Click="OpenPractice" Margin="0,8,0,0" HorizontalAlignment="Left"/></StackPanel></UniformGrid>
+     </StackPanel>
     </Border>
-    <Grid Grid.Column="1" Margin="32,28,32,22">
-      <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-      <Grid x:Name="LivePage">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-        <StackPanel Margin="0,0,0,23">
-          <TextBlock Text="YOUR GAME, YOUR PACE" Foreground="{StaticResource Accent}" FontSize="10" Margin="0,0,0,10"/>
-          <TextBlock Text="在游戏里，读懂每一句。" FontSize="29" FontWeight="SemiBold"/>
-          <TextBlock Text="保留英语世界，让不认识的词不再打断冒险。" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,10,0,0"/>
-        </StackPanel>
-        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="19,17" Margin="0,0,0,20">
-          <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center" Margin="0,0,15,0">
-              <TextBlock x:Name="StateLabel" Text="●  准备开始" Foreground="#9FD3B4" FontSize="13"/>
-              <TextBlock x:Name="RegionLabel" Text="先框选游戏中的任务详情或字幕区域" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0"/>
-            </StackPanel>
-            <Button Grid.Column="1" Content="框选区域" Click="PickRegion" Margin="0,0,10,0" VerticalAlignment="Center"/>
-            <Button Grid.Column="2" x:Name="StartButton" Content="开始翻译  →" Click="ToggleTranslation" Style="{StaticResource Primary}" VerticalAlignment="Center"/>
-          </Grid>
-        </Border>
-        <Grid Grid.Row="2">
-          <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition Width="260"/></Grid.ColumnDefinitions>
-          <Border Style="{StaticResource Card}">
-            <Grid>
-              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-              <Grid><TextBlock Text="对照阅读" FontSize="15" FontWeight="SemiBold"/><TextBlock x:Name="PreviewBadge" Text="示例预览" Foreground="{StaticResource Muted}" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
-              <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,24,0,20">
-                <StackPanel>
-                  <TextBlock Text="ORIGINAL" Foreground="#78828F" FontSize="10" Margin="0,0,0,12"/>
-                  <TextBlock x:Name="SourcePreview" Text="Find the ancient relic before the enemy arrives." FontSize="23" LineHeight="34" Foreground="#E0E4EA"/>
-                  <Border Height="1" Background="{StaticResource Line}" Margin="0,24"/>
-                  <TextBlock Text="简体中文" Foreground="#78828F" FontSize="10" Margin="0,0,0,12"/>
-                  <TextBlock x:Name="TranslationPreview" Text="在敌人到达前找到古代遗物。" FontSize="20" LineHeight="32" Foreground="{StaticResource Accent}"/>
-                </StackPanel>
-              </ScrollViewer>
-              <StackPanel Grid.Row="2" Orientation="Horizontal"><Button Content="预览悬浮窗  ↗" Click="PreviewOverlay" FontSize="11" Padding="12,8"/><Button Content="检查识别" Click="PreviewRecognition" FontSize="11" Padding="12,8" Margin="8,0,0,0"/></StackPanel>
-            </Grid>
-          </Border>
-          <StackPanel Grid.Column="2">
-            <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,16">
-              <StackPanel>
-                <TextBlock Text="翻译工作台" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                <TextBlock Text="识别语言" Foreground="{StaticResource Muted}" FontSize="11"/>
-                <TextBlock x:Name="LanguageSummary" Text="English → 简体中文" FontSize="13" Margin="0,6,0,14"/>
-                <TextBlock Text="翻译服务" Foreground="{StaticResource Muted}" FontSize="11"/>
-                <TextBlock x:Name="ProviderSummary" Text="MyMemory · 免密钥" FontSize="13" Margin="0,6,0,14"/>
-                <TextBlock x:Name="PrivacySummary" Text="文字发送至 MyMemory；截图仅在本机处理。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18"/>
-                <Button Content="选平台 / 接入免费额度  →" Click="SetupProvider" Margin="0,16,0,0" FontSize="11" Padding="10,8"/>
-              </StackPanel>
-            </Border>
-            <Border Background="#20221F" CornerRadius="12" Padding="20">
-              <StackPanel>
-                <TextBlock Text="让词汇留在记忆里" Foreground="{StaticResource Accent}" FontSize="13" FontWeight="SemiBold"/>
-                <TextBlock Text="解锁悬浮窗后，点击英文单词查看释义，再收藏到生词本。" Foreground="#B4BAAF" FontSize="11" LineHeight="19" Margin="0,10,0,0"/>
-                <TextBlock x:Name="WordCountLabel" Text="已收藏 0 个单词" Foreground="{StaticResource Accent}" FontSize="11" Margin="0,14,0,0"/>
-              </StackPanel>
-            </Border>
-          </StackPanel>
-        </Grid>
-      </Grid>
-      <Grid x:Name="WordsPage" Visibility="Collapsed">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel Margin="0,0,0,25"><TextBlock Text="把冒险变成词汇量。" FontSize="28" FontWeight="SemiBold"/><TextBlock Text="保存单词，也保存你第一次遇到它的那句话。" Foreground="{StaticResource Muted}" Margin="0,10,0,0"/></StackPanel>
-        <Grid Grid.Row="1" Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="LookupInput" ToolTip="输入英文单词" KeyDown="LookupKeyDown"/><Button Grid.Column="1" Content="查词并收藏" Click="LookupWord" Margin="10,0"/><Button Grid.Column="2" Content="导出 CSV" Click="ExportWords"/></Grid>
-        <ListBox Grid.Row="2" x:Name="WordsList" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" Foreground="#EEF0F4" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
-          <ListBox.ItemTemplate><DataTemplate><Border Padding="16" BorderBrush="#30343B" BorderThickness="0,0,0,1"><StackPanel><TextBlock Text="{Binding Word}" FontSize="20" Foreground="#E9BD82"/><TextBlock Text="{Binding Meaning}" FontSize="14" Margin="0,8,0,6"/><TextBlock Text="{Binding Context}" Foreground="#959DAA" FontSize="12"/></StackPanel></Border></DataTemplate></ListBox.ItemTemplate>
-        </ListBox>
-        <Grid Grid.Row="3" Margin="0,16,0,0"><TextBlock x:Name="WordsHint" Text="还没有收藏。可输入单词查词，或点击悬浮窗中的英文。" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="0,0,130,0"/><Button Content="删除所选" Click="DeleteWord" HorizontalAlignment="Right" Padding="14,8" FontSize="11"/></Grid>
-      </Grid>
-      <ScrollViewer x:Name="SettingsPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
-        <StackPanel>
-          <TextBlock Text="适合你的阅读方式。" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,10"/>
-          <TextBlock Text="更改翻译或识别设置后，当前会话将暂停。" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,24"/>
-          <Border Style="{StaticResource Card}" Margin="0,0,0,16"><StackPanel>
-            <TextBlock Text="识别与翻译" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,18"/>
-            <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions>
-              <StackPanel><TextBlock Text="屏幕文字的语言" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><ComboBox x:Name="LanguageCombo" DisplayMemberPath="Name" SelectedValuePath="Tag"/></StackPanel>
-              <StackPanel Grid.Column="2"><TextBlock Text="翻译服务" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><TextBlock x:Name="SettingsProviderSummary" FontSize="13"/><Button Content="打开翻译服务向导" Click="SetupProvider" Margin="0,9,0,0"/></StackPanel>
-            </Grid>
-            <TextBlock x:Name="ProviderNotice" Foreground="{StaticResource Accent}" FontSize="11" LineHeight="19" Margin="0,15,0,0"/>
-            <TextBlock Text="文字识别引擎" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,18,0,7"/>
-            <ComboBox x:Name="OcrModeCombo"><ComboBoxItem Content="本地增强 · PaddleOCR v5（推荐英文/中文，已内置）"/><ComboBoxItem Content="Windows OCR · 较轻量，使用系统语言包"/></ComboBox>
-            <TextBlock Text="增强图像方式" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,7"/>
-            <ComboBox x:Name="OcrImageCombo"><ComboBoxItem Content="自动 · 放大小字、增强对比度，低置信度时重试"/><ComboBoxItem Content="原图 · 保留彩色和字体细节"/><ComboBoxItem Content="暗底亮字 · 反色增强字幕"/><ComboBoxItem Content="低对比度 · 灰阶增强"/></ComboBox>
-            <TextBlock Text="增强引擎仅用 CPU，首次加载可能较慢；英文/中文无需额外安装。其他语言使用 Windows OCR。花体、像素字和文字特效仍可能识别错误，可用「检查识别」查看框选截图和原始识别结果。图像方式仅作用于增强引擎。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="19" Margin="0,9,0,0"/>
-            <Button Content="增强引擎加载失败？打开微软运行库安装说明 ↗" Click="OpenOcrRuntimeHelp" HorizontalAlignment="Left" FontSize="10" Padding="9,6" Margin="0,9,0,0"/>
-            <TextBlock Text="扫描间隔（毫秒，350–5000）" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,17,0,7"/><TextBox x:Name="IntervalInput" Width="160" HorizontalAlignment="Left"/>
-            <TextBlock Text="连续两次识别一致后翻译；实际延迟还取决于翻译服务。较短间隔会增加 CPU 使用。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,9,0,0"/>
-          </StackPanel></Border>
-          <Border Style="{StaticResource Card}" Margin="0,0,0,16"><StackPanel>
-            <TextBlock Text="悬浮窗" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
-            <CheckBox x:Name="OriginalCheck" Content="同时显示原文，保留学习语境"/>
-            <TextBlock Text="文字大小" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,8"/><Slider x:Name="FontSlider" Minimum="14" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True"/>
-            <TextBlock Text="整体不透明度" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,8"/><Slider x:Name="OpacitySlider" Minimum="0.35" Maximum="1"/>
-          </StackPanel></Border>
-          <Button Content="保存设置" Click="SaveSettings" Style="{StaticResource Primary}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-          <TextBlock x:Name="DataLocation" Foreground="#78828F" FontSize="10" Margin="0,0,0,16"/>
-        </StackPanel>
-      </ScrollViewer>
-      <StackPanel Grid.Row="1" Margin="0,20,0,0">
-        <TextBlock x:Name="RecognitionStatus" Text="本地增强识别 · 截图留在本机" Foreground="#9FD3B4" FontSize="10" Margin="0,0,0,7"/>
-        <TextBlock x:Name="MessageLabel" Text="建议使用游戏的无边框窗口模式。先在练习场试试看。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,12"/>
-        <Border Height="1" Background="{StaticResource Line}"/>
-        <TextBlock Text="Ctrl+Alt+T 开始/暂停     R 框选区域     H 隐藏悬浮窗     L 切换穿透（均加 Ctrl+Alt）" Foreground="#78828F" FontSize="10" Margin="0,13,0,0"/>
-      </StackPanel>
+    <Border Grid.Row="2" Style="{StaticResource Card}" Padding="14" Margin="0,0,0,14"><StackPanel>
+     <WrapPanel><Button Content="选择窗口" Click="PickWindow" Margin="0,0,8,7"/><Button Content="手动框选" Click="PickRegion" Margin="0,0,8,7"/><Button x:Name="OnceButton" Content="翻译一次" Click="TranslateOnce" Margin="0,0,8,7"/><Button x:Name="StartButton" Content="开始连续翻译" Click="ToggleTranslation" Style="{StaticResource Primary}" Margin="0,0,8,7"/><Button Content="检查识别" Click="PreviewRecognition" Margin="0,0,0,7"/></WrapPanel>
+     <TextBlock x:Name="RegionLabel" Text="尚未选择区域" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,3,0,0"/>
+    </StackPanel></Border>
+    <Border Grid.Row="3" Background="White" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="14,11" Margin="0,0,0,14">
+     <UniformGrid Columns="5"><StackPanel><TextBlock Text="截图" FontSize="11" Foreground="{StaticResource Muted}"/><TextBlock x:Name="CaptureStage" Text="未开始" Margin="0,5,8,0"/></StackPanel><StackPanel><TextBlock Text="文字识别" FontSize="11" Foreground="{StaticResource Muted}"/><TextBlock x:Name="OcrStage" Text="未开始" Margin="0,5,8,0"/></StackPanel><StackPanel><TextBlock Text="文字判断" FontSize="11" Foreground="{StaticResource Muted}"/><TextBlock x:Name="StabilityStage" Text="未开始" Margin="0,5,8,0"/></StackPanel><StackPanel><TextBlock Text="翻译服务" FontSize="11" Foreground="{StaticResource Muted}"/><TextBlock x:Name="TranslationStage" Text="未请求" Margin="0,5,8,0"/></StackPanel><StackPanel><TextBlock Text="悬浮显示" FontSize="11" Foreground="{StaticResource Muted}"/><TextBlock x:Name="OverlayStage" Text="未显示" Margin="0,5,0,0"/></StackPanel></UniformGrid>
+    </Border>
+    <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
+     <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid><TextBlock Text="识别原文" FontWeight="SemiBold"/><TextBlock x:Name="PreviewBadge" Text="暂无内容" Foreground="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Right"/></Grid><ScrollViewer Grid.Row="1" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="SourcePreview" Text="选择区域后，识别文字会显示在这里。" FontSize="19" LineHeight="30"/></ScrollViewer><Button Grid.Row="2" Content="预览悬浮窗" Click="PreviewOverlay" HorizontalAlignment="Left" FontSize="11" Margin="0,12,0,0"/></Grid></Border>
+     <Border Grid.Column="2" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid><TextBlock Text="中文译文" FontWeight="SemiBold"/><Button Content="服务设置" Click="SetupProvider" HorizontalAlignment="Right" FontSize="11" Padding="8,1" MinHeight="24"/></Grid><ScrollViewer Grid.Row="1" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto"><TextBlock x:Name="TranslationPreview" Text="尚未发送翻译请求。" FontSize="19" LineHeight="30"/></ScrollViewer><StackPanel Grid.Row="2" Margin="0,10,0,0"><TextBlock x:Name="ProviderSummary" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="PrivacySummary" Visibility="Collapsed"/><TextBlock x:Name="LanguageSummary" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,4,0,0"/></StackPanel></Grid></Border>
     </Grid>
+   </Grid>
+   <Grid x:Name="WordsPage" Visibility="Collapsed"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Text="生词本" FontSize="25" FontWeight="SemiBold" Margin="0,0,0,18"/>
+    <Grid Grid.Row="1" Margin="0,0,0,14"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="LookupInput" KeyDown="LookupKeyDown" ToolTip="英文单词"/><Button Grid.Column="1" Content="查词" Click="LookupWord" Margin="8,0"/><Button Grid.Column="2" Content="导出 CSV" Click="ExportWords"/></Grid>
+    <ListBox Grid.Row="2" x:Name="WordsList" Background="White" BorderBrush="{StaticResource Line}" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"><ListBox.ItemTemplate><DataTemplate><Border Padding="14" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1"><StackPanel><TextBlock Text="{Binding Word}" FontSize="20" FontWeight="SemiBold"/><TextBlock Text="{Binding Meaning}" Margin="0,6,0,0"/><TextBlock Text="{Binding Context}" Foreground="{StaticResource Muted}" Margin="0,6,0,0" FontSize="12"/></StackPanel></Border></DataTemplate></ListBox.ItemTemplate></ListBox>
+    <Grid Grid.Row="3" Margin="0,14,0,0"><StackPanel><TextBlock x:Name="WordsHint" Foreground="{StaticResource Muted}"/><TextBlock x:Name="WordCountLabel" Visibility="Collapsed"/></StackPanel><Button Content="删除所选" Click="DeleteWord" HorizontalAlignment="Right"/></Grid>
+   </Grid>
+   <ScrollViewer x:Name="SettingsPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,0,12,0"><TextBlock Text="设置" FontSize="25" FontWeight="SemiBold" Margin="0,0,0,20"/>
+    <Border Style="{StaticResource Card}" Margin="0,0,0,14"><StackPanel><TextBlock Text="翻译服务" Style="{StaticResource SectionTitle}"/><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="SettingsProviderSummary" VerticalAlignment="Center"/><Button Grid.Column="1" Content="配置服务" Click="SetupProvider"/></Grid><TextBlock x:Name="ProviderNotice" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,10,0,0"/></StackPanel></Border>
+    <Border Style="{StaticResource Card}" Margin="0,0,0,14"><StackPanel><TextBlock Text="文字识别" Style="{StaticResource SectionTitle}"/>
+     <TextBlock Text="原文语言" Margin="0,0,0,6"/><ComboBox x:Name="LanguageCombo" DisplayMemberPath="Name" SelectedValuePath="Tag"/>
+     <TextBlock Text="识别引擎" Margin="0,14,0,6"/><ComboBox x:Name="OcrModeCombo"><ComboBoxItem Content="PaddleOCR v5 · 增强字体识别"/><ComboBoxItem Content="Windows OCR · 轻量识别"/></ComboBox>
+     <TextBlock Text="图像处理" Margin="0,14,0,6"/><ComboBox x:Name="OcrImageCombo"><ComboBoxItem Content="自动"/><ComboBoxItem Content="原图"/><ComboBoxItem Content="暗底亮字"/><ComboBoxItem Content="低对比度"/></ComboBox>
+     <Grid Margin="0,14,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions><TextBlock Text="扫描间隔（毫秒）" VerticalAlignment="Center"/><TextBox Grid.Column="1" x:Name="IntervalInput"/></Grid>
+     <Expander Header="运行环境" Margin="0,12,0,0"><StackPanel Margin="0,10,0,0"><TextBlock Text="增强识别在独立进程中运行；超时或结果为空时尝试 Windows OCR。" Foreground="{StaticResource Muted}" FontSize="12"/><Button Content="微软 VC++ 运行库说明" Click="OpenOcrRuntimeHelp" HorizontalAlignment="Left" Margin="0,8,0,0"/></StackPanel></Expander>
+    </StackPanel></Border>
+    <Border Style="{StaticResource Card}" Margin="0,0,0,14"><StackPanel><TextBlock Text="悬浮窗" Style="{StaticResource SectionTitle}"/><CheckBox x:Name="OriginalCheck" Content="显示原文"/><TextBlock Text="字号" Margin="0,10,0,6"/><Slider x:Name="FontSlider" Minimum="14" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True"/><TextBlock Text="不透明度" Margin="0,14,0,6"/><Slider x:Name="OpacitySlider" Minimum="0.35" Maximum="1"/></StackPanel></Border>
+    <Button Content="保存设置" Click="SaveSettings" Style="{StaticResource Primary}" HorizontalAlignment="Left"/><TextBlock x:Name="DataLocation" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,14,0,8"/>
+   </StackPanel></ScrollViewer>
+   <Grid x:Name="DiagnosticsPage" Visibility="Collapsed"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Text="诊断与日志" FontSize="25" FontWeight="SemiBold" Margin="0,0,0,18"/>
+    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,14"><StackPanel><TextBlock x:Name="DiagnosisText" Text="尚无会话记录。选择区域后，可先翻译一次。" FontWeight="SemiBold"/><WrapPanel Margin="0,12,0,0"><Button Content="测试翻译服务" Click="TestCurrentService" Margin="0,0,8,0"/><Button Content="检查识别" Click="PreviewRecognition" Margin="0,0,8,0"/><Button Content="改用 Windows OCR" Click="UseWindowsOcr"/></WrapPanel></StackPanel></Border>
+    <DataGrid x:Name="LogGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" RowHeaderWidth="0" GridLinesVisibility="Horizontal" HeadersVisibility="Column" BorderBrush="{StaticResource Line}" Background="White" FontSize="12" EnableRowVirtualization="True"><DataGrid.Columns><DataGridTextColumn Header="时间" Binding="{Binding TimeLabel}" Width="96"/><DataGridTextColumn Header="步骤" Binding="{Binding StageLabel}" Width="75"/><DataGridTextColumn Header="状态" Binding="{Binding StateLabel}" Width="60"/><DataGridTextColumn Header="说明" Binding="{Binding Message}" Width="*"/><DataGridTextColumn Header="耗时" Binding="{Binding DurationLabel}" Width="80"/><DataGridTextColumn Header="代码" Binding="{Binding Code}" Width="150"/></DataGrid.Columns></DataGrid>
+    <StackPanel Grid.Row="3" Margin="0,14,0,0"><WrapPanel><Button Content="导出诊断报告" Click="ExportDiagnostics" Margin="0,0,8,0"/><Button Content="打开日志文件夹" Click="OpenLogFolder"/></WrapPanel><TextBlock Text="报告包含步骤、耗时、错误代码与配置摘要，不包含密钥、截图或游戏原文。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,8,0,0"/></StackPanel>
+   </Grid>
+   <StackPanel Grid.Row="1" Margin="0,14,0,0"><TextBlock x:Name="RecognitionStatus" Text="尚未运行识别" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="MessageLabel" Text="选择窗口或手动框选，然后翻译一次。" FontSize="12" Margin="0,5,0,0"/><Border Height="1" Background="{StaticResource Line}" Margin="0,10,0,8"/><TextBlock Text="快捷键（均加 Ctrl+Alt）：T 开始/停止   F 单次翻译   W 选窗口   R 框选   H 隐藏   L 穿透" FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel>
   </Grid>
+ </Grid>
 </Window>
