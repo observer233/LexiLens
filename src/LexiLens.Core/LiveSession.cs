@@ -2,9 +2,9 @@ using System.Threading.Channels;
 
 namespace LexiLens.Core;
 
-// OCR keeps running while a translation is in flight. A newer stable subtitle cancels
-// the previous request, and its version also guards against uncooperative providers.
-public sealed class LiveSession(ITextSource source, ITranslator translator, int intervalMs)
+// OCR keeps running while translation is in flight. Accuracy mode prefers the
+// newest text; fast mode retains a bounded dialogue queue and emits replay pairs.
+public sealed class LiveSession(ITextSource source, ITranslator translator, int intervalMs, bool fastMode = false)
 {
     private readonly object _sync = new();
     private CancellationTokenSource? _request;
@@ -12,6 +12,9 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
     public event Action<LiveUpdate>? Updated;
     public event Action<string>? Observed;
     public event Action<PipelineEvent>? Progress;
+    // In-memory replay receives completed pairs, including a brief subtitle that
+    // has left the screen. It never goes into the diagnostic journal.
+    public event Action<LiveUpdate>? Completed;
 
     public async Task RunOnceAsync(CancellationToken ct)
     {
@@ -31,7 +34,9 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
             var result = await translator.TranslateAsync(text, ct);
             ct.ThrowIfCancellationRequested();
             Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Success, "TRANSLATION_OK", "译文已返回", timer.ElapsedMilliseconds, text.Length));
-            Updated?.Invoke(new LiveUpdate(text, result));
+            var update = new LiveUpdate(text, result);
+            Completed?.Invoke(update);
+            Updated?.Invoke(update);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex)
@@ -43,9 +48,12 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
+        if (fastMode) { await RunFastAsync(cancellationToken); return; }
         var channel = Channel.CreateBounded<(long Version, string Text)>(new BoundedChannelOptions(1)
         {
-            SingleReader = true, SingleWriter = true, FullMode = BoundedChannelFullMode.DropOldest
+            SingleReader = true,
+            SingleWriter = true,
+            FullMode = BoundedChannelFullMode.DropOldest
         });
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var produce = ProduceAsync(channel.Writer, linked.Token);
@@ -70,6 +78,7 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
         long frame = 0;
         while (!ct.IsCancellationRequested)
         {
+            var scan = System.Diagnostics.Stopwatch.StartNew();
             var text = TextProcessing.Normalize(await source.ReadAsync(ct));
             frame++;
             Observed?.Invoke(text);
@@ -95,7 +104,7 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
                 Updated?.Invoke(new LiveUpdate(text, IsBusy: text.Length > 0));
                 writer.TryWrite((version, text));
             }
-            await Task.Delay(Math.Clamp(intervalMs, 50, 5000), ct);
+            await DelayScanAsync(scan, ct);
         }
     }
 
@@ -119,7 +128,9 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
                     if (!request.IsCancellationRequested && item.Version == _version)
                     {
                         Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Success, "TRANSLATION_OK", "译文已返回", watch.ElapsedMilliseconds, item.Text.Length));
-                        Updated?.Invoke(new LiveUpdate(item.Text, result));
+                        var update = new LiveUpdate(item.Text, result);
+                        if (item.Text.Length > 0) Completed?.Invoke(update);
+                        Updated?.Invoke(update);
                     }
                 }
             }
@@ -139,6 +150,77 @@ public sealed class LiveSession(ITextSource source, ITranslator translator, int 
             {
                 lock (_sync) { if (ReferenceEquals(_request, request)) _request = null; }
             }
+        }
+    }
+
+    private async Task DelayScanAsync(System.Diagnostics.Stopwatch scan, CancellationToken ct)
+    {
+        var remaining = Math.Clamp(intervalMs, 50, 5000) - (int)scan.ElapsedMilliseconds;
+        if (remaining > 0) await Task.Delay(remaining, ct);
+        else await Task.Yield();
+        ct.ThrowIfCancellationRequested();
+    }
+
+    private async Task RunFastAsync(CancellationToken ct)
+    {
+        var queue = Channel.CreateBounded<(long Version, string Text, DateTimeOffset CapturedAt)>(new BoundedChannelOptions(8)
+        { SingleWriter = true, SingleReader = false, FullMode = BoundedChannelFullMode.DropOldest },
+            _ => Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Warning, "SUBTITLE_QUEUE_FULL", "翻译速度落后，已跳过最早的待译字幕；可调低扫描频率或更换更快的服务")));
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        long newest = 0, displayed = 0;
+        async Task Produce()
+        {
+            var stabilizer = new TextStabilizer();
+            while (true)
+            {
+                var scan = System.Diagnostics.Stopwatch.StartNew();
+                var text = TextProcessing.Normalize(await source.ReadAsync(linked.Token));
+                Observed?.Invoke(text);
+                var decision = stabilizer.Observe(text, immediate: true);
+                Progress?.Invoke(new(PipelineStage.Stability, decision.Submit ? PipelineState.Success : PipelineState.Skipped,
+                    decision.Code, decision.Code == "TEXT_IMMEDIATE" ? "快速字幕：首次识别立即提交" : text.Length == 0 ? "暂无文字，保留最近译文" : "文字未变化，跳过重复翻译", Characters: text.Length));
+                if (decision.Submit && text.Length > 0)
+                {
+                    var version = Interlocked.Increment(ref newest);
+                    Updated?.Invoke(new(text, IsBusy: true));
+                    queue.Writer.TryWrite((version, text, DateTimeOffset.Now));
+                }
+                await DelayScanAsync(scan, linked.Token);
+            }
+        }
+        async Task Consume()
+        {
+            await foreach (var item in queue.Reader.ReadAllAsync(linked.Token))
+            {
+                var timer = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                    Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Running, "TRANSLATION_QUEUED", "正在翻译已捕获的字幕", Characters: item.Text.Length));
+                    var result = await translator.TranslateAsync(item.Text, linked.Token);
+                    linked.Token.ThrowIfCancellationRequested();
+                    lock (_sync)
+                    {
+                        var update = new LiveUpdate(item.Text, result, IsPrevious: item.Version < Interlocked.Read(ref newest), CapturedAt: item.CapturedAt);
+                        Completed?.Invoke(update);
+                        Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Success, "TRANSLATION_OK", "字幕译文已返回", timer.ElapsedMilliseconds, item.Text.Length));
+                        // A late result stays in replay, but never overwrites a newer result.
+                        if (item.Version > displayed) { displayed = item.Version; Updated?.Invoke(update); }
+                    }
+                }
+                catch (OperationCanceledException) when (linked.IsCancellationRequested) { throw; }
+                catch (Exception ex)
+                {
+                    Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Error, ex is CloudApiException cloud ? cloud.Code : ex is OperationCanceledException ? "API_TIMEOUT" : "TRANSLATION_ERROR", FriendlyError(ex), timer.ElapsedMilliseconds));
+                    lock (_sync) { if (item.Version >= displayed) Updated?.Invoke(new(item.Text, Error: FriendlyError(ex))); }
+                }
+            }
+        }
+        var producer = Produce(); var consumers = new[] { Consume(), Consume() };
+        try { await await Task.WhenAny(producer, Task.WhenAll(consumers)); }
+        finally
+        {
+            await linked.CancelAsync(); queue.Writer.TryComplete();
+            try { await Task.WhenAll(consumers.Prepend(producer)); } catch (OperationCanceledException) when (linked.IsCancellationRequested) { }
         }
     }
 

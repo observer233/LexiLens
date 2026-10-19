@@ -28,6 +28,10 @@ public partial class MainWindow : Window
     private List<VocabularyEntry> _words;
     private Hotkeys? _hotkeys;
     private OverlayWindow? _overlay;
+    private readonly Dictionary<string, AreaState> _areas = new();
+    private readonly ObservableCollection<ReplayEntry> _replay = new();
+    private string? _selectedAreaId;
+    private bool _refreshingAreas;
     private CancellationTokenSource? _sessionCancellation;
     private Task? _sessionTask;
     private int _generation;
@@ -36,6 +40,7 @@ public partial class MainWindow : Window
     private string _latestOcr = "";
     private bool _preview;
     private string? _expectedDiagnosticText;
+    private readonly Dictionary<string, string> _diagnosticAreaTexts = new();
 
     public MainWindow(string? dataDirectory = null)
     {
@@ -47,6 +52,7 @@ public partial class MainWindow : Window
         foreach (var entry in _journal.Snapshot()) _logs.Add(entry);
         _stageTimer.Tick += (_, _) => RefreshPipeline(); _stageTimer.Start();
         _settings = _store.Load("settings.json", new AppSettings()).Sanitize();
+        ReplayList.ItemsSource = _replay;
         _words = _store.Load("vocabulary.json", new List<VocabularyEntry>());
         _translator = CreateTranslator();
         var languages = ScreenTextSource.Languages().Select(x => new LanguageOption(x.Tag, x.Name)).ToList();
@@ -61,6 +67,8 @@ public partial class MainWindow : Window
             LanguageCombo.Items.Refresh(); LanguageCombo.SelectedValue = _settings.SourceLanguage;
         }
         IntervalInput.Text = _settings.ScanIntervalMs.ToString(); OriginalCheck.IsChecked = _settings.ShowOriginal;
+        FastCheck.IsChecked = _settings.FastMode; FastSettingsCheck.IsChecked = _settings.FastMode;
+        RequestIntervalInput.Text = _settings.RequestIntervalMs.ToString();
         FontSlider.Value = _settings.FontSize; OpacitySlider.Value = _settings.OverlayOpacity;
         OcrModeCombo.SelectedIndex = (int)_settings.OcrMode; OcrImageCombo.SelectedIndex = (int)_settings.OcrImageMode;
         DataLocation.Text = "设置与生词仅保存在本机：" + _store.DirectoryPath;
@@ -101,26 +109,43 @@ public partial class MainWindow : Window
             case 2: await SelectRegionAsync(); break;
             case 3:
                 EnsureOverlay();
-                if (_overlay!.IsVisible) _overlay.Hide(); else _overlay.Show();
+                var visible = _overlay!.IsVisible;
+                foreach (var overlay in AllOverlays()) { if (visible) overlay.Hide(); else overlay.Show(); }
                 break;
             case 4:
-                EnsureOverlay(); _overlay!.Show(); _overlay.SetLocked(!_overlay.IsLocked);
+                EnsureOverlay(); var locked = !_overlay!.IsLocked;
+                foreach (var overlay in AllOverlays()) { overlay.Show(); overlay.SetLocked(locked); }
                 break;
             case 5: await SelectRegionAsync(true); break;
             case 6: await ToggleAsync(true); break;
+            case 7: await SelectRegionAsync(add: true); break;
         }
     }
 
-    private void EnsureOverlay()
+    private CaptureArea? SelectedArea => _settings.CaptureAreas().FirstOrDefault(x => x.Id == _selectedAreaId) ?? _settings.CaptureAreas().FirstOrDefault();
+    private IEnumerable<OverlayWindow> AllOverlays() => _areas.Values.Select(x => x.Overlay).OfType<OverlayWindow>().Append(_overlay).OfType<OverlayWindow>().Distinct().ToArray();
+
+    private OverlayWindow EnsureOverlay(CaptureArea? area = null)
     {
-        if (_overlay != null) return;
-        _overlay = new OverlayWindow();
-        _overlay.WordClicked += word => OpenWord(word);
-        _overlay.ApplySettings(_settings);
-        _overlay.Show();
-        _overlay.SetContent("", "尚未识别", "未开始");
-        _overlay.Closed += (_, _) => _overlay = null;
-        if (!_overlay.CaptureExcluded) MessageLabel.Text = "系统未能排除悬浮窗截图，请将悬浮窗移到识别区域外。";
+        area ??= SelectedArea;
+        AreaState? state = null;
+        if (area != null)
+        {
+            if (!_areas.TryGetValue(area.Id, out state)) _areas[area.Id] = state = new(area, _settings.CaptureAreas().ToList().FindIndex(x => x.Id == area.Id) + 1);
+            if (state.Overlay != null) { if (area.Id == SelectedArea?.Id) _overlay = state.Overlay; return state.Overlay; }
+        }
+        else if (_overlay != null) return _overlay;
+        var overlay = new OverlayWindow();
+        if (state != null) state.Overlay = overlay;
+        if (area == null || area.Id == SelectedArea?.Id) _overlay = overlay;
+        overlay.WordClicked += word => OpenWord(word, state?.Source);
+        overlay.ApplySettings(_settings); overlay.Show();
+        if (area != null) overlay.PlaceNear(area.Region, area.Overlay);
+        overlay.AreaName = area?.Name ?? "预览";
+        overlay.SetContent("", "尚未识别", "未开始");
+        overlay.Closed += (_, _) => { if (state != null) state.Overlay = null; if (ReferenceEquals(_overlay, overlay)) _overlay = null; };
+        if (!overlay.CaptureExcluded) MessageLabel.Text = "系统未能排除悬浮窗截图，请将悬浮窗移到识别区域外。";
+        return overlay;
     }
 
     private async Task ToggleAsync(bool once = false)
@@ -130,51 +155,74 @@ public partial class MainWindow : Window
         try
         {
             if (_sessionCancellation != null) { await StopAsync(); if (!once) return; }
-            if (_settings.Region == null)
+            var areas = _settings.CaptureAreas();
+            if (areas.Count == 0)
             {
                 MessageLabel.Text = "请先框选字幕或任务区域，再开始翻译。";
                 return;
             }
-            if (!NativeMethods.IsOnDesktop(_settings.Region)) throw new InvalidOperationException("保存的区域不在当前屏幕内，请重新框选。");
+            if (areas.Any(x => !NativeMethods.IsOnDesktop(x.Region))) throw new InvalidOperationException("有区域不在当前屏幕内，请重新框选或移除该区域。");
             if (_settings.Provider == TranslationProvider.Cloud) _translator.Cloud.Validate(true);
             _stages.Clear();
             Record(new(PipelineStage.Session, PipelineState.Running, once ? "SESSION_ONCE" : "SESSION_START", once ? "开始单次翻译" : "开始连续翻译"));
-            var textSource = new ScreenTextSource(_settings.Region, _settings.SourceLanguage, _expectedDiagnosticText, _settings.OcrMode, _settings.OcrImageMode);
-            EnsureOverlay(); _overlay!.Show(); _overlay.SetLocked(true);
             _source = ""; _translation = ""; _latestOcr = ""; _preview = false;
-            _overlay.SetContent("", "正在截取选区…", "截图");
             SourcePreview.Text = "正在识别选区…"; TranslationPreview.Text = "尚未发送翻译请求。";
             PreviewBadge.Text = "实时识别";
             var cancellation = new CancellationTokenSource();
             _sessionCancellation = cancellation;
             var generation = ++_generation;
-            textSource.Status = status => Dispatcher.BeginInvoke(() => { if (generation == _generation) RecognitionStatus.Text = status; });
-            textSource.Progress = Record;
-            var session = new LiveSession(textSource, _translator, _settings.ScanIntervalMs);
-            session.Progress += Record;
-            session.Observed += text => Dispatcher.BeginInvoke(() =>
+            var jobs = new List<Task>();
+            foreach (var area in areas)
             {
-                if (generation != _generation) return;
-                _latestOcr = text;
-                SourcePreview.Text = text.Length == 0 ? "未识别到文字" : text;
-                if (_source.Length == 0 && text.Length == 0) _overlay?.SetContent("", "未识别到文字，请查看主窗口的识别状态。", "未识别到文字");
-            });
-            session.Updated += update => Dispatcher.BeginInvoke(() =>
-            {
-                if (generation == _generation && !cancellation.IsCancellationRequested) ApplyUpdate(update);
-            });
+                var overlay = EnsureOverlay(area); overlay.Show(); overlay.SetLocked(true);
+                var state = _areas[area.Id]; state.Source = ""; state.Translation = ""; state.LatestOcr = ""; state.Stages.Clear();
+                overlay.SetContent("", "正在截取选区…", "截图");
+                jobs.Add(RunAreaAsync(state, cancellation, generation, once));
+            }
             StateLabel.Text = once ? "单次翻译中" : "连续翻译中"; StartButton.Content = "停止翻译";
             MessageLabel.Text = "";
             RecognitionStatus.Text = "";
-            _sessionTask = ObserveSessionAsync(session, textSource, cancellation, generation, once);
+            _sessionTask = ObserveAreasAsync(jobs, cancellation, generation, once);
         }
         catch (Exception ex) { MessageLabel.Text = LiveSession.FriendlyError(ex); Record(new(PipelineStage.Session, PipelineState.Error, "START_FAILED", LiveSession.FriendlyError(ex))); }
         finally { _transition = false; }
     }
 
-    private async Task ObserveSessionAsync(LiveSession session, ScreenTextSource source, CancellationTokenSource cancellation, int generation, bool once)
+    private async Task RunAreaAsync(AreaState state, CancellationTokenSource cancellation, int generation, bool once)
     {
-        try { if (once) await session.RunOnceAsync(cancellation.Token); else await session.RunAsync(cancellation.Token); }
+        try
+        {
+            using var source = new ScreenTextSource(state.Area.Region, _settings.SourceLanguage, _diagnosticAreaTexts.GetValueOrDefault(state.Area.Id) ?? _expectedDiagnosticText, _settings.OcrMode, _settings.OcrImageMode,
+                fastMode: _settings.FastMode, captureInterval: _settings.FastIntervalMs);
+            source.Status = status => Dispatcher.BeginInvoke(() =>
+            {
+                if (generation != _generation) return;
+                state.Status = status;
+                if (SelectedArea?.Id == state.Area.Id) RecognitionStatus.Text = status;
+            });
+            void Progress(PipelineEvent item) { if (generation == _generation) Record(item with { Area = state.Number }); }
+            source.Progress = Progress;
+            var session = new LiveSession(source, _translator, _settings.FastMode ? _settings.FastIntervalMs : _settings.ScanIntervalMs, _settings.FastMode);
+            session.Progress += Progress;
+            session.Observed += text => Dispatcher.BeginInvoke(() =>
+            {
+                if (generation != _generation) return;
+                state.LatestOcr = text;
+                if (SelectedArea?.Id == state.Area.Id) { _latestOcr = text; SourcePreview.Text = text.Length == 0 ? "未识别到文字" : text; }
+            });
+            session.Updated += update => Dispatcher.BeginInvoke(() =>
+            { if (generation == _generation && !cancellation.IsCancellationRequested) ApplyUpdate(update, state); });
+            session.Completed += update => Dispatcher.BeginInvoke(() =>
+            {
+                if (generation != _generation || cancellation.IsCancellationRequested) return;
+                var capturedAt = update.CapturedAt ?? DateTimeOffset.Now;
+                var index = _replay.TakeWhile(x => x.CapturedAt > capturedAt).Count();
+                _replay.Insert(index, new(capturedAt, state.Area.Name, update.Source, update.Translation ?? ""));
+                while (_replay.Count > 100) _replay.RemoveAt(_replay.Count - 1);
+                ReplayCount.Text = $"最近 {_replay.Count} 条 · 仅在本次打开期间保留";
+            });
+            if (once) await session.RunOnceAsync(cancellation.Token); else await session.RunAsync(cancellation.Token);
+        }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
         catch (Exception ex)
         {
@@ -182,20 +230,22 @@ public partial class MainWindow : Window
             {
                 MessageLabel.Text = LiveSession.FriendlyError(ex);
                 var stage = _stages.Values.Where(x => x.State == PipelineState.Running).OrderBy(x => x.Time).LastOrDefault()?.Stage ?? PipelineStage.Ocr;
-                Record(new(stage, PipelineState.Error, stage == PipelineStage.Capture ? "CAPTURE_FAILED" : "OCR_FAILED", LiveSession.FriendlyError(ex)));
-                StateLabel.Text = "识别已停止"; StartButton.Content = "开始连续翻译";
-                _overlay?.SetContent(_source, "识别已停止，请检查主窗口提示。", "需要处理");
-                if (ReferenceEquals(_sessionCancellation, cancellation)) _sessionCancellation = null;
-                cancellation.Dispose();
+                Record(new(stage, PipelineState.Error, stage == PipelineStage.Capture ? "CAPTURE_FAILED" : "OCR_FAILED", LiveSession.FriendlyError(ex), Area: state.Number));
+                state.Overlay?.SetContent(state.Source, "识别已停止，请检查诊断日志。", "需要处理");
+                Record(new(PipelineStage.Session, PipelineState.Error, "AREA_FAILED", "该区域已停止，其他区域继续运行", Area: state.Number));
             }
         }
+    }
+
+    private async Task ObserveAreasAsync(List<Task> jobs, CancellationTokenSource cancellation, int generation, bool once)
+    {
+        try { await Task.WhenAll(jobs); }
         finally
         {
-            source.Dispose();
-            if (once && generation == _generation && ReferenceEquals(_sessionCancellation, cancellation))
+            if (generation == _generation && ReferenceEquals(_sessionCancellation, cancellation))
             {
                 _sessionCancellation = null; cancellation.Dispose();
-                StateLabel.Text = _stages.Values.Any(x => x.State == PipelineState.Error) ? "未完成" : _latestOcr.Length == 0 ? "未识别到文字" : "单次完成";
+                StateLabel.Text = _stages.Values.Any(x => x.State == PipelineState.Error) ? "未完成" : once ? "单次完成" : "已停止";
                 StartButton.Content = "开始连续翻译";
             }
         }
@@ -203,6 +253,7 @@ public partial class MainWindow : Window
 
     private async Task StopAsync()
     {
+        SaveOverlayPlacements();
         ++_generation;
         var cancellation = _sessionCancellation;
         _sessionCancellation = null;
@@ -216,46 +267,59 @@ public partial class MainWindow : Window
         foreach (var pending in _stages.Values.Where(x => x.State == PipelineState.Running).ToArray())
             Record(new(pending.Stage, PipelineState.Skipped, "CANCELLED", "已停止"));
         StateLabel.Text = "已停止"; StartButton.Content = "开始连续翻译";
-        _overlay?.SetContent(_source, _translation, "已暂停");
+        foreach (var area in _areas.Values) area.Overlay?.SetContent(area.Source, area.Translation, "已暂停");
         MessageLabel.Text = "已停止。";
         if (cancellation != null) Record(new(PipelineStage.Session, PipelineState.Success, "SESSION_STOP", "会话已停止"));
     }
 
-    private void ApplyUpdate(LiveUpdate update)
+    private void ApplyUpdate(LiveUpdate update, AreaState? state = null)
     {
-        _source = update.Source;
-        if (update.IsBusy) _translation = "翻译中…";
-        else if (update.Error != null) _translation = update.Error;
-        else _translation = update.Translation ?? "";
+        var source = update.Source;
+        var translation = update.IsBusy ? "翻译中…" : update.Error ?? update.Translation ?? "";
+        if (state != null) { state.Source = source; state.Translation = translation; }
+        var overlay = state?.Overlay ?? _overlay;
+        overlay?.SetContent(source, translation, update.Error != null ? "翻译失败" : update.IsBusy ? "翻译中" : update.IsPrevious ? "稍早字幕 · 可在对白回看中查看" : "实时翻译");
+        if (!update.IsBusy && update.Translation != null) overlay?.AvoidOverlaps(AllOverlays());
+        if (state != null && state.Area.Id != SelectedArea?.Id)
+        {
+            if (!update.IsBusy && update.Translation != null) Record(new(PipelineStage.Overlay, PipelineState.Success, "OVERLAY_OK", "译文已显示", Area: state.Number));
+            return;
+        }
+        _source = source; _translation = translation;
         SourcePreview.Text = _source.Length > 0 ? _source : "区域内暂无文字";
         TranslationPreview.Text = _translation;
-        _overlay?.SetContent(_source, _translation, update.Error != null ? "翻译失败" : update.IsBusy ? "翻译中" : "实时翻译");
         if (update.Error != null) MessageLabel.Text = update.Error;
         else if (!update.IsBusy && update.Source.Length > 0)
         {
-            Record(new(PipelineStage.Overlay, PipelineState.Success, "OVERLAY_OK", "译文已显示"));
+            Record(new(PipelineStage.Overlay, PipelineState.Success, "OVERLAY_OK", "译文已显示", Area: state?.Number ?? 0));
             if (!_settings.OnboardingCompleted) { _settings = _settings with { OnboardingCompleted = true }; _store.Save("settings.json", _settings); GuidePanel.Visibility = Visibility.Collapsed; }
         }
     }
 
-    private async Task SelectRegionAsync(bool window = false)
+    private async Task SelectRegionAsync(bool window = false, bool add = false)
     {
         if (_transition) return;
         _transition = true;
         try
         {
             await StopAsync();
+            if (add && _settings.CaptureAreas().Count >= AppSettings.MaxAreas) { MessageLabel.Text = $"最多同时使用 {AppSettings.MaxAreas} 个区域，可先移除一个。"; return; }
             var oldState = WindowState;
-            var overlayVisible = _overlay?.IsVisible == true;
-            Hide(); _overlay?.Hide();
+            var visibleOverlays = AllOverlays().Where(x => x.IsVisible).ToArray();
+            Hide(); foreach (var overlay in visibleOverlays) overlay.Hide();
             CaptureRegion? region;
             try { region = window ? await WindowPicker.SelectAsync() : await RegionPicker.SelectAsync(); }
-            finally { Show(); WindowState = oldState; if (overlayVisible) _overlay?.Show(); }
+            finally { Show(); WindowState = oldState; foreach (var overlay in visibleOverlays) overlay.Show(); }
             if (region != null)
             {
-                var next = _settings with { Region = region };
+                var areas = _settings.CaptureAreas().ToList();
+                var current = add ? null : SelectedArea;
+                var selected = current == null ? new CaptureArea(Guid.NewGuid().ToString("N"), "区域 " + (areas.Count + 1), region) : current with { Region = region, Overlay = null };
+                if (current == null) areas.Add(selected); else areas[areas.FindIndex(x => x.Id == current.Id)] = selected;
+                CloseAreaOverlays(); _selectedAreaId = selected.Id;
+                var next = _settings with { Region = region, Areas = areas };
                 _store.Save("settings.json", next); _settings = next;
-                RefreshSummary(); MessageLabel.Text = "区域已选择，可先翻译一次。";
+                RefreshSummary(); MessageLabel.Text = "区域已选择，每个区域使用独立悬浮框。";
             }
         }
         catch (Exception ex) { MessageLabel.Text = ex.Message; }
@@ -265,6 +329,88 @@ public partial class MainWindow : Window
     private async void ToggleTranslation(object sender, RoutedEventArgs e) => await ToggleAsync();
     private async void PickRegion(object sender, RoutedEventArgs e) => await SelectRegionAsync();
     private async void PickWindow(object sender, RoutedEventArgs e) => await SelectRegionAsync(true);
+    private async void AddRegion(object sender, RoutedEventArgs e) => await SelectRegionAsync(add: true);
+    private void CloseAreaOverlays()
+    {
+        foreach (var overlay in AllOverlays()) overlay.Close();
+        _areas.Clear(); _overlay = null;
+    }
+
+    private void SaveOverlayPlacements()
+    {
+        if (_settings == null || _areas.Count == 0) return;
+        var areas = _settings.CaptureAreas().Select(x => _areas.TryGetValue(x.Id, out var state) && state.Overlay != null
+            ? x with { Overlay = state.Overlay.Placement } : x).ToList();
+        _settings = _settings with { Areas = areas };
+        try { _store.Save("settings.json", _settings); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { Record(new(PipelineStage.Session, PipelineState.Warning, "PLACEMENT_SAVE_FAILED", "悬浮框位置未能保存，当前会话仍可停止")); }
+    }
+
+    private void SelectArea(object sender, SelectionChangedEventArgs e)
+    {
+        if (_refreshingAreas || AreaCombo.SelectedItem is not CaptureArea area) return;
+        _selectedAreaId = area.Id; _settings = _settings with { Region = area.Region };
+        AreaNameInput.Text = area.Name;
+        _stages.Clear();
+        if (_areas.TryGetValue(area.Id, out var state))
+        {
+            _overlay = state.Overlay; _source = state.Source; _translation = state.Translation; _latestOcr = state.LatestOcr;
+            RecognitionStatus.Text = state.Status;
+            foreach (var entry in state.Stages) _stages[entry.Key] = entry.Value;
+        }
+        else { _overlay = null; _source = ""; _translation = ""; _latestOcr = ""; }
+        SourcePreview.Text = _latestOcr.Length > 0 ? _latestOcr : "区域内暂无文字"; TranslationPreview.Text = _translation;
+        RegionLabel.Text = $"共 {_settings.CaptureAreas().Count} 个区域 · 当前 {area.Name} · {area.Region}";
+        RefreshPipeline();
+    }
+
+    private async void RemoveArea(object sender, RoutedEventArgs e)
+    {
+        if (_transition || SelectedArea is not { } selected) return;
+        _transition = true;
+        try
+        {
+            await StopAsync();
+            var areas = _settings.CaptureAreas().Where(x => x.Id != selected.Id).ToList();
+            CloseAreaOverlays(); _selectedAreaId = areas.FirstOrDefault()?.Id;
+            _settings = _settings with { Areas = areas, Region = areas.FirstOrDefault()?.Region };
+            _store.Save("settings.json", _settings); RefreshSummary();
+        }
+        finally { _transition = false; }
+    }
+
+    private async void RenameArea(object sender, RoutedEventArgs e)
+    {
+        if (_transition || SelectedArea is not { } selected) return;
+        var name = AreaNameInput.Text.Trim();
+        if (name.Length is < 1 or > 40) { MessageLabel.Text = "区域名称需为 1 到 40 个字符。"; return; }
+        _transition = true;
+        try
+        {
+            await StopAsync();
+            _settings = _settings with { Areas = _settings.CaptureAreas().Select(x => x.Id == selected.Id ? x with { Name = name } : x).ToList() };
+            CloseAreaOverlays(); _store.Save("settings.json", _settings); RefreshSummary();
+        }
+        finally { _transition = false; }
+    }
+
+    private async void ChangeFastMode(object sender, RoutedEventArgs e)
+    {
+        if (_settings == null || _transition || _settings.FastMode == (FastCheck.IsChecked == true)) return;
+        _transition = true;
+        try
+        {
+            await StopAsync(); _settings = _settings with { FastMode = FastCheck.IsChecked == true };
+            FastSettingsCheck.IsChecked = _settings.FastMode;
+            _store.Save("settings.json", _settings); _translator = CreateTranslator();
+            MessageLabel.Text = _settings.FastMode ? "快速字幕：系统 OCR 优先，首次识别立即翻译，短对白进入回看。" : "清晰优先：使用所选引擎，确认文字后翻译。";
+        }
+        finally { _transition = false; }
+    }
+
+    private void ShowReplay(object sender, RoutedEventArgs e) => ShowPage(ReplayPage, null, ReplayNav);
+    private void ClearReplay(object sender, RoutedEventArgs e) { _replay.Clear(); ReplayCount.Text = "暂无记录 · 仅在本次打开期间保留"; }
     private async void TranslateOnce(object sender, RoutedEventArgs e) => await ToggleAsync(true);
     private async void PreviewRecognition(object sender, RoutedEventArgs e)
     {
@@ -273,9 +419,10 @@ public partial class MainWindow : Window
         try
         {
             await StopAsync();
-            if (_settings.Region == null) throw new InvalidOperationException("请先框选游戏中的字幕或任务文字区域。");
+            var region = SelectedArea?.Region;
+            if (region == null) throw new InvalidOperationException("请先框选游戏中的字幕或任务文字区域。");
             MessageLabel.Text = "正在本机识别选区，首次加载模型可能需要几秒…";
-            using var source = new ScreenTextSource(_settings.Region, _settings.SourceLanguage, mode: _settings.OcrMode, imageMode: _settings.OcrImageMode) { Progress = Record };
+            using var source = new ScreenTextSource(region, _settings.SourceLanguage, mode: _settings.OcrMode, imageMode: _settings.OcrImageMode) { Progress = Record };
             var text = await source.ReadAsync(CancellationToken.None);
             var frame = source.LastFrame!.Value;
             new RecognitionPreviewWindow(frame.Bytes, frame.Width, frame.Height, text, source.LastRecognition!.Summary) { Owner = this }.Show();
@@ -296,11 +443,11 @@ public partial class MainWindow : Window
         MessageLabel.Text = "当前为固定示例。点击 ancient 或 relic 试用查词；框选屏幕后可开始真实翻译。";
     }
 
-    private void OpenWord(string word)
+    private void OpenWord(string word, string? context = null)
     {
         if (!System.Text.RegularExpressions.Regex.IsMatch(word, @"^[A-Za-z]+(?:['’-][A-Za-z]+)*$"))
         { MessageLabel.Text = "请输入一个英文单词。"; return; }
-        new WordWindow(word, _preview ? "[示例] " + _source : _source, _translator, entry =>
+        new WordWindow(word, _preview ? "[示例] " + _source : context ?? _source, _translator, entry =>
         {
             var next = _words.Where(x => !string.Equals(x.Word, entry.Word, StringComparison.OrdinalIgnoreCase)).Prepend(entry).ToList();
             _store.Save("vocabulary.json", next); _words = next;
@@ -339,19 +486,27 @@ public partial class MainWindow : Window
         _transition = true;
         try
         {
-            if (!int.TryParse(IntervalInput.Text, out var interval) || interval < 350 || interval > 5000)
-                throw new ArgumentException("扫描间隔需填写 350 到 5000 之间的整数。");
+            if (!int.TryParse(IntervalInput.Text, out var interval) || interval < 100 || interval > 5000)
+                throw new ArgumentException("扫描间隔需填写 100 到 5000 之间的整数。");
+            if (!int.TryParse(RequestIntervalInput.Text, out var requestInterval) || requestInterval < 200 || requestInterval > 5000)
+                throw new ArgumentException("API 最小间隔需填写 200 到 5000 之间的整数。");
+            await StopAsync();
             var next = (_settings with
             {
                 SourceLanguage = LanguageCombo.SelectedValue as string ?? "en-US",
-                ScanIntervalMs = interval, OverlayOpacity = OpacitySlider.Value, FontSize = FontSlider.Value,
-                OcrMode = (OcrMode)OcrModeCombo.SelectedIndex, OcrImageMode = (OcrImageMode)OcrImageCombo.SelectedIndex,
+                ScanIntervalMs = interval,
+                OverlayOpacity = OpacitySlider.Value,
+                FontSize = FontSlider.Value,
+                FastMode = FastSettingsCheck.IsChecked == true,
+                RequestIntervalMs = requestInterval,
+                OcrMode = (OcrMode)OcrModeCombo.SelectedIndex,
+                OcrImageMode = (OcrImageMode)OcrImageCombo.SelectedIndex,
                 ShowOriginal = OriginalCheck.IsChecked == true
             }).Sanitize();
-            await StopAsync();
             _store.Save("settings.json", next); _settings = next;
             _translator = CreateTranslator();
-            _overlay?.ApplySettings(_settings); RefreshSummary();
+            foreach (var overlay in AllOverlays()) overlay.ApplySettings(_settings);
+            FastCheck.IsChecked = _settings.FastMode; RefreshSummary();
             MessageLabel.Text = "设置已保存。重新开始后使用新设置。";
         }
         catch (Exception ex) { MessageLabel.Text = ex.Message; }
@@ -360,7 +515,12 @@ public partial class MainWindow : Window
 
     private void RefreshSummary()
     {
-        RegionLabel.Text = _settings.Region?.ToString() ?? "尚未选择区域";
+        _refreshingAreas = true;
+        AreaCombo.ItemsSource = _settings.CaptureAreas();
+        AreaCombo.SelectedItem = SelectedArea;
+        AreaNameInput.Text = SelectedArea?.Name ?? "";
+        _refreshingAreas = false;
+        RegionLabel.Text = SelectedArea is { } selected ? $"共 {_settings.CaptureAreas().Count} 个区域 · 当前 {selected.Name} · {selected.Region}" : "尚未选择区域";
         LanguageSummary.Text = _settings.SourceLanguage + " → 简体中文";
         ProviderSummary.Text = _settings.Provider switch
         {
@@ -388,7 +548,7 @@ public partial class MainWindow : Window
         try
         {
             await StopAsync();
-            _overlay?.Hide();
+            foreach (var overlay in AllOverlays()) overlay.Hide();
             var wizard = new ProviderSetupWindow(_settings, _http, _vault, Record) { Owner = this };
             if (wizard.ShowDialog() == true && wizard.SelectedSettings is { } selected)
             {
@@ -407,7 +567,8 @@ public partial class MainWindow : Window
         WordsPage.Visibility = ReferenceEquals(grid, WordsPage) ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = scroll == SettingsPage ? Visibility.Visible : Visibility.Collapsed;
         DiagnosticsPage.Visibility = ReferenceEquals(grid, DiagnosticsPage) ? Visibility.Visible : Visibility.Collapsed;
-        foreach (var nav in new[] { LiveNav, WordsNav, SettingsNav, DiagnosticsNav })
+        ReplayPage.Visibility = ReferenceEquals(grid, ReplayPage) ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var nav in new[] { LiveNav, WordsNav, SettingsNav, DiagnosticsNav, ReplayNav })
         {
             nav.Background = ReferenceEquals(nav, selected) ? new SolidColorBrush(Color.FromRgb(223, 234, 248)) : Brushes.Transparent;
             nav.Foreground = ReferenceEquals(nav, selected) ? (Brush)FindResource("Accent") : new SolidColorBrush(Color.FromRgb(32, 41, 52));
@@ -434,15 +595,26 @@ public partial class MainWindow : Window
         _closing = true;
         _stageTimer.Stop();
         await StopAsync();
-        _hotkeys?.Dispose(); _overlay?.Close(); _http.Dispose();
+        _hotkeys?.Dispose(); CloseAreaOverlays(); _http.Dispose();
         _closeReady = true; _ = Dispatcher.BeginInvoke(Close);
     }
 
     internal sealed record LanguageOption(string Tag, string Name);
+    internal sealed record ReplayEntry(DateTimeOffset CapturedAt, string AreaName, string Source, string Translation)
+    { public string Label => AreaName + " · " + CapturedAt.ToString("HH:mm:ss"); }
+    private sealed class AreaState(CaptureArea area, int number)
+    {
+        internal CaptureArea Area { get; } = area;
+        internal int Number { get; } = number;
+        internal OverlayWindow? Overlay { get; set; }
+        internal string Source = "", Translation = "", LatestOcr = "", Status = "";
+        internal Dictionary<PipelineStage, PipelineEvent> Stages { get; } = new();
+    }
 
     internal async Task<(string Source, string Translation)> VerifyLiveSessionAsync(CaptureRegion region, CancellationToken ct, bool once = false)
     {
-        _settings = _settings with { Region = region, ScanIntervalMs = 350 };
+        CloseAreaOverlays();
+        _settings = (_settings with { Region = region, Areas = [], ScanIntervalMs = 350, FastMode = false }).Sanitize();
         _expectedDiagnosticText = PracticeWindow.Samples[0].Text;
         RefreshSummary();
         await ToggleAsync(once);
@@ -459,6 +631,46 @@ public partial class MainWindow : Window
     internal void RenderLiveForDiagnostics() => ShowPage(LivePage, null, LiveNav);
     internal void RenderLogForDiagnostics() => ShowPage(DiagnosticsPage, null, DiagnosticsNav);
 
+    internal async Task<bool> VerifyMultipleAreasAsync(CaptureRegion[] regions, HttpClient http, Action<Window, string> render, CancellationToken ct)
+    {
+        await StopAsync(); CloseAreaOverlays();
+        var original = _settings; var originalTranslator = _translator;
+        try
+        {
+            _settings = (new AppSettings
+            {
+                Provider = TranslationProvider.Cloud,
+                CloudServiceId = "zhipu",
+                OnboardingCompleted = true,
+                CloudProfiles = new() { ["zhipu"] = new() { Model = ProviderCatalog.Get("zhipu").Models.First() } },
+                RequestIntervalMs = 200,
+                Areas = regions.Select((r, i) => new CaptureArea("diagnostic-" + i, i == 0 ? "任务" : "对白", r)).ToList()
+            }).Sanitize();
+            for (var i = 0; i < regions.Length; i++) _diagnosticAreaTexts["diagnostic-" + i] = PracticeWindow.Samples[i].Text;
+            _translator = new TranslationClient(http, _settings, "diagnostic-not-a-real-key") { Progress = Record };
+            _selectedAreaId = "diagnostic-0"; RefreshSummary(); GuidePanel.Visibility = Visibility.Collapsed;
+            await ToggleAsync();
+            while (_areas.Values.Count(x => x.Translation == PracticeWindow.Samples[x.Number - 1].Translation) != regions.Length) await Task.Delay(50, ct);
+            var overlays = _areas.Values.Select(x => x.Overlay!).ToArray();
+            var passed = overlays.Length == regions.Length && overlays.Distinct().Count() == regions.Length && overlays.All(x => x.CaptureExcluded && x.IsLocked)
+                && _replay.Any(x => x.Source == PracticeWindow.Samples[0].Text) && _replay.Any(x => x.Source == PracticeWindow.Samples[1].Text);
+            RenderLiveForDiagnostics(); await Task.Delay(150); render(this, "multi-region-main.png");
+            for (var i = 0; i < overlays.Length; i++) render(overlays[i], $"region-{i + 1}-overlay.png");
+            AreaCombo.SelectedIndex = 1;
+            passed &= SourcePreview.Text == PracticeWindow.Samples[1].Text && TranslationPreview.Text == PracticeWindow.Samples[1].Translation;
+            ShowPage(ReplayPage, null, ReplayNav); await Task.Delay(150); render(this, "replay.png");
+            await StopAsync();
+            var saved = _store.Load("settings.json", new AppSettings()).Sanitize();
+            passed &= saved.Areas.Count == regions.Length && saved.Areas.All(x => x.Overlay?.IsValid == true);
+            return passed;
+        }
+        finally
+        {
+            await StopAsync(); CloseAreaOverlays(); _diagnosticAreaTexts.Clear();
+            _settings = original; _translator = originalTranslator; _selectedAreaId = null; RefreshSummary();
+        }
+    }
+
     private void Record(PipelineEvent item)
     {
         _journal.Append(item);
@@ -466,9 +678,11 @@ public partial class MainWindow : Window
         {
             if (_closing) return;
             _logs.Add(item); while (_logs.Count > 250) _logs.RemoveAt(0);
-            _stages[item.Stage] = item;
+            var area = _areas.Values.FirstOrDefault(x => x.Number == item.Area);
+            if (area != null) area.Stages[item.Stage] = item;
+            if (item.Area == 0 || area?.Area.Id == SelectedArea?.Id) _stages[item.Stage] = item;
             if (item.State is PipelineState.Error or PipelineState.Warning) MessageLabel.Text = item.Message;
-            if (_sessionCancellation != null && _source.Length == 0 && item.Stage is PipelineStage.Capture or PipelineStage.Ocr or PipelineStage.Stability)
+            if (_sessionCancellation != null && (item.Area == 0 || area?.Area.Id == SelectedArea?.Id) && _source.Length == 0 && item.Stage is PipelineStage.Capture or PipelineStage.Ocr or PipelineStage.Stability)
             {
                 if (item.State == PipelineState.Running || item.Code is "OCR_EMPTY" or "TEXT_PENDING")
                     _overlay?.SetContent(_latestOcr, item.Message, item.StageLabel);
@@ -525,7 +739,7 @@ public partial class MainWindow : Window
     {
         var dialog = new SaveFileDialog { Filter = "诊断报告|*.json", FileName = "LexiLens-diagnostic-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json" };
         if (dialog.ShowDialog() != true) return;
-        try { File.WriteAllText(dialog.FileName, _journal.Export(_settings, "0.4.0"), new UTF8Encoding(false)); MessageLabel.Text = "诊断报告已导出。"; }
+        try { File.WriteAllText(dialog.FileName, _journal.Export(_settings, "0.5.0"), new UTF8Encoding(false)); MessageLabel.Text = "诊断报告已导出。"; }
         catch (Exception ex) { MessageLabel.Text = ex.Message; }
     }
 
@@ -535,7 +749,7 @@ public partial class MainWindow : Window
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_journal.DirectoryPath) { UseShellExecute = true });
     }
 
-    internal string ExportDiagnosticReport() => _journal.Export(_settings, "0.4.0");
+    internal string ExportDiagnosticReport() => _journal.Export(_settings, "0.5.0");
     internal void RecordForDiagnostics(PipelineEvent item) => Record(item);
     internal double[] DiagnosticColumnWidths() => LogGrid.Columns.Select(x => x.ActualWidth).ToArray();
 }

@@ -1,0 +1,16 @@
+{
+  "version": "0.5.0",
+  "date": "2026-10-20",
+  "scope": "One controlled desktop crop read, including capture and Windows OCR. OCR had already been called earlier in each diagnostic run.",
+  "cropPixels": [924, 150],
+  "font": "Segoe UI 28",
+  "fixedText": "Find the ancient relic before the enemy arrives.",
+  "fastReadSamplesMs": [14, 17],
+  "engine": "Windows OCR",
+  "bothSamplesRecognizedExactly": true,
+  "includesRemoteTranslation": false,
+  "guaranteesGameLatency": false,
+  "twoIndependentAreasWithDistinctMockTranslationsPassed": true,
+  "firstFrameWithoutSecondFrameTestPassed": true,
+  "lateOldResultCannotReplaceNewerResultTestPassed": true
+}

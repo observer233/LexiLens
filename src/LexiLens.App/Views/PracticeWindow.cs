@@ -16,6 +16,7 @@ internal sealed class PracticeWindow : Window
     ];
     private int _index;
     private TextBlock _subtitle = null!;
+    private readonly System.Windows.Threading.DispatcherTimer _dialogueTimer = new() { Interval = TimeSpan.FromMilliseconds(800) };
 
     internal CaptureRegion SubtitleRegion()
     {
@@ -39,6 +40,16 @@ internal sealed class PracticeWindow : Window
         var next = new Button { Content = "下一句  →", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 22, 0, 15) };
         next.Click += (_, _) => subtitle.Text = Samples[++_index % Samples.Length].Text;
         panel.Children.Add(next);
+        var cycle = new Button { Content = "自动对白 · 0.8 秒/句", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12) };
+        cycle.Click += (_, _) =>
+        {
+            if (_dialogueTimer.IsEnabled) { _dialogueTimer.Stop(); cycle.Content = "自动对白 · 0.8 秒/句"; }
+            else { _dialogueTimer.Start(); cycle.Content = "停止自动对白"; }
+        };
+        _dialogueTimer.Tick += (_, _) => subtitle.Text = Samples[++_index % Samples.Length].Text;
+        Closed += (_, _) => _dialogueTimer.Stop();
+        panel.Children.Add(cycle);
+        Height = 470;
         panel.Children.Add(new TextBlock { Text = "按 Ctrl+Alt+R 框选英文区域，再按 Ctrl+Alt+T 开始翻译。", Foreground = Brushes.LightGray, FontSize = 12 });
         Content = panel;
     }

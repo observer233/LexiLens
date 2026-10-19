@@ -8,7 +8,7 @@ public sealed class TextStabilizer
     private string _previous = "", _accepted = "";
     private int _repeats, _exactRepeats, _pending;
 
-    public StabilizedText Observe(string text)
+    public StabilizedText Observe(string text, bool immediate = false)
     {
         text = TextProcessing.Normalize(text);
         _exactRepeats = text == _previous ? _exactRepeats + 1 : 1;
@@ -25,9 +25,9 @@ public sealed class TextStabilizer
         if (text == _accepted || (Similar(text, _accepted) && _exactRepeats < 2))
         { _pending = 0; return new(text, false, "TEXT_UNCHANGED"); }
         _pending++;
-        if (_repeats >= 2 || _pending >= 3)
+        if (immediate || _repeats >= 2 || _pending >= 3)
         {
-            var code = _repeats >= 2 ? "TEXT_READY" : "TEXT_DEBOUNCE_LIMIT";
+            var code = immediate ? "TEXT_IMMEDIATE" : _repeats >= 2 ? "TEXT_READY" : "TEXT_DEBOUNCE_LIMIT";
             _accepted = text; _pending = 0;
             return new(text, true, code);
         }

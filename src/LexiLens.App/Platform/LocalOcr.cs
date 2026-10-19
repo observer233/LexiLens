@@ -19,7 +19,7 @@ internal sealed class LocalOcr : IDisposable
 {
     private PaddleOcrAll? _engine;
 
-    internal Recognition Recognize(byte[] bytes, int width, int height, OcrImageMode mode, CancellationToken ct)
+    internal Recognition Recognize(byte[] bytes, int width, int height, OcrImageMode mode, CancellationToken ct, bool fast = false)
     {
         var clock = Stopwatch.StartNew();
         ct.ThrowIfCancellationRequested();
@@ -33,12 +33,12 @@ internal sealed class LocalOcr : IDisposable
         Marshal.Copy(bytes, 0, bgra.Data, bytes.Length);
         using var color = new Mat();
         Cv2.CvtColor(bgra, color, ColorConversionCodes.BGRA2BGR);
-        using var prepared = Prepare(color, mode);
+        using var prepared = Prepare(color, mode, fast);
         var result = Read(prepared);
         ct.ThrowIfCancellationRequested();
         // A weak reading gets one second view. Never "correct" text with a language
         // model: proper names and unfamiliar quest words must not be invented.
-        if (mode == OcrImageMode.Auto && result.Confidence < .86)
+        if (!fast && mode == OcrImageMode.Auto && result.Confidence < .86)
         {
             using var original = Prepare(color, OcrImageMode.Original);
             var retry = Read(original);
@@ -60,11 +60,11 @@ internal sealed class LocalOcr : IDisposable
 
     private static double Quality(Recognition r) => (r.Confidence ?? 0) * Math.Min(1, r.Text.Count(char.IsLetterOrDigit) / 8d);
 
-    private static Mat Prepare(Mat color, OcrImageMode mode)
+    private static Mat Prepare(Mat color, OcrImageMode mode, bool fast = false)
     {
         using var scaled = new Mat();
         // Enlarge small subtitle crops, but cap work and memory for large regions.
-        var scale = Math.Min(2, 2048d / Math.Max(color.Width, color.Height));
+        var scale = Math.Min(fast ? 1.5 : 2, (fast ? 1280d : 2048d) / Math.Max(color.Width, color.Height));
         Cv2.Resize(color, scaled, new Size(), scale, scale, InterpolationFlags.Cubic);
         var result = new Mat();
         if (mode == OcrImageMode.Original) scaled.CopyTo(result);

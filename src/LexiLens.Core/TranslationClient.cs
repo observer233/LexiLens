@@ -11,34 +11,47 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings, str
     public Action<PipelineEvent>? Progress { get => _cloud.Progress; set => _cloud.Progress = value; }
     private readonly Dictionary<string, string> _cache = new(StringComparer.Ordinal);
     private readonly Queue<string> _order = new();
-    private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly SemaphoreSlim _gate = new(2, 2);
+    private readonly SemaphoreSlim[] _textGates = Enumerable.Range(0, 32).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
+    private readonly object _cacheSync = new();
 
     public async Task<string> TranslateAsync(string text, CancellationToken cancellationToken)
     {
         text = TextProcessing.Normalize(text);
         if (text.Length == 0) return "";
-        await _gate.WaitAsync(cancellationToken);
+        var textGate = _textGates[(text.GetHashCode(StringComparison.Ordinal) & int.MaxValue) % _textGates.Length];
+        await textGate.WaitAsync(cancellationToken);
         try
         {
-            if (_cache.TryGetValue(text, out var cached))
+            string? cached;
+            lock (_cacheSync) _cache.TryGetValue(text, out cached);
+            if (cached != null)
             {
                 Progress?.Invoke(new(PipelineStage.Translation, PipelineState.Skipped, "TRANSLATION_CACHE", "使用已有译文", Characters: text.Length));
                 return cached;
             }
-            var result = settings.Provider switch
+            await _gate.WaitAsync(cancellationToken);
+            try
             {
-                TranslationProvider.MyMemory => await MyMemoryAsync(text, cancellationToken),
-                TranslationProvider.Ollama => await OllamaAsync(text, cancellationToken),
-                TranslationProvider.Cloud => await _cloud.TranslateAsync(text, cancellationToken),
-                _ => throw new InvalidOperationException("请选择有效的翻译服务。")
-            };
-            if (string.IsNullOrWhiteSpace(result)) throw new InvalidOperationException("翻译服务返回了空内容。请检查模型和服务配置。");
-            if (_cache.Count >= 300) _cache.Remove(_order.Dequeue());
-            _cache[text] = result;
-            _order.Enqueue(text);
-            return result;
+                var result = settings.Provider switch
+                {
+                    TranslationProvider.MyMemory => await MyMemoryAsync(text, cancellationToken),
+                    TranslationProvider.Ollama => await OllamaAsync(text, cancellationToken),
+                    TranslationProvider.Cloud => await _cloud.TranslateAsync(text, cancellationToken),
+                    _ => throw new InvalidOperationException("请选择有效的翻译服务。")
+                };
+                if (string.IsNullOrWhiteSpace(result)) throw new InvalidOperationException("翻译服务返回了空内容。请检查模型和服务配置。");
+                lock (_cacheSync)
+                {
+                    if (_cache.Count >= 300) _cache.Remove(_order.Dequeue());
+                    _cache[text] = result;
+                    _order.Enqueue(text);
+                }
+                return result;
+            }
+            finally { _gate.Release(); }
         }
-        finally { _gate.Release(); }
+        finally { textGate.Release(); }
     }
 
     private async Task<string> MyMemoryAsync(string text, CancellationToken ct)

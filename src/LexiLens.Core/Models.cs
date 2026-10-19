@@ -18,8 +18,16 @@ public sealed record CaptureRegion(int X, int Y, int Width, int Height)
     public override string ToString() => $"{Width} × {Height} px · ({X}, {Y})";
 }
 
+public sealed record OverlayPlacement(double Left, double Top, double Width)
+{
+    public bool IsValid => double.IsFinite(Left) && double.IsFinite(Top) && double.IsFinite(Width) && Width is >= 300 and <= 1600;
+}
+
+public sealed record CaptureArea(string Id, string Name, CaptureRegion Region, OverlayPlacement? Overlay = null);
+
 public sealed record AppSettings
 {
+    public const int MaxAreas = 4;
     public TranslationProvider Provider { get; init; } = TranslationProvider.MyMemory;
     public string SourceLanguage { get; init; } = "en-US";
     public string TargetLanguage { get; init; } = "zh-CN";
@@ -31,14 +39,29 @@ public sealed record AppSettings
     public OcrMode OcrMode { get; init; } = OcrMode.Enhanced;
     public OcrImageMode OcrImageMode { get; init; } = OcrImageMode.Auto;
     public int ScanIntervalMs { get; init; } = 700;
+    public bool FastMode { get; init; } = true;
+    public int FastIntervalMs { get; init; } = 150;
+    public int RequestIntervalMs { get; init; } = 400;
     public double OverlayOpacity { get; init; } = 0.92;
     public double FontSize { get; init; } = 21;
     public bool ShowOriginal { get; init; } = true;
     public CaptureRegion? Region { get; init; }
+    public List<CaptureArea> Areas { get; init; } = [];
+
+    public IReadOnlyList<CaptureArea> CaptureAreas() => Areas is { Count: > 0 } ? Areas : Region?.IsValid == true
+        ? [new CaptureArea("legacy", "区域 1", Region)] : [];
 
     public AppSettings Sanitize() => this with
     {
-        ScanIntervalMs = Math.Clamp(ScanIntervalMs, 350, 5000),
+        ScanIntervalMs = Math.Clamp(ScanIntervalMs, 100, 5000),
+        FastIntervalMs = Math.Clamp(FastIntervalMs, 100, 1000),
+        RequestIntervalMs = Math.Clamp(RequestIntervalMs, 200, 5000),
+        Areas = CaptureAreas().Where(x => x != null && x.Region?.IsValid == true && !string.IsNullOrWhiteSpace(x.Id))
+            .DistinctBy(x => x.Id).Take(MaxAreas).Select((x, i) => x with
+            {
+                Name = string.IsNullOrWhiteSpace(x.Name) ? $"区域 {i + 1}" : x.Name.Trim()[..Math.Min(x.Name.Trim().Length, 40)],
+                Overlay = x.Overlay?.IsValid == true ? x.Overlay : null
+            }).ToList(),
         OverlayOpacity = double.IsFinite(OverlayOpacity) ? Math.Clamp(OverlayOpacity, 0.35, 1) : 0.92,
         FontSize = double.IsFinite(FontSize) ? Math.Clamp(FontSize, 14, 36) : 21,
         Region = Region?.IsValid == true ? Region : null,
@@ -55,7 +78,7 @@ public sealed record AppSettings
 }
 
 public sealed record VocabularyEntry(string Word, string Meaning, string Context, DateTimeOffset AddedAt);
-public sealed record LiveUpdate(string Source, string? Translation = null, string? Error = null, bool IsBusy = false);
+public sealed record LiveUpdate(string Source, string? Translation = null, string? Error = null, bool IsBusy = false, bool IsPrevious = false, DateTimeOffset? CapturedAt = null);
 
 public interface ITextSource
 {

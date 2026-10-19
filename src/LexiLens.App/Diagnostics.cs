@@ -131,12 +131,39 @@ internal static class Diagnostics
                 }
                 window.RenderLogForDiagnostics(); await Task.Delay(250); Render(window, Path.Combine(directory, "diagnostics.png"));
                 report["diagnosticColumnWidths"] = window.DiagnosticColumnWidths();
-                report["diagnosticLayoutPassed"] = window.DiagnosticColumnWidths().Length == 6 && window.DiagnosticColumnWidths().Take(3).All(x => x >= 50);
+                report["diagnosticLayoutPassed"] = window.DiagnosticColumnWidths().Length == 7 && window.DiagnosticColumnWidths().Take(4).All(x => x >= 50);
                 var exported = window.ExportDiagnosticReport();
                 File.WriteAllText(Path.Combine(directory, "diagnostic-export.json"), exported);
                 report["diagnosticExportPassed"] = exported.Contains("OCR_TIMEOUT_FALLBACK", StringComparison.Ordinal) && !exported.Contains(dummyKey, StringComparison.Ordinal)
                     && !exported.Contains(PracticeWindow.Samples[0].Text, StringComparison.Ordinal);
                 practice.Close();
+
+                var multi = new Window
+                {
+                    Title = "LexiLens 多区域诊断练习", Width = 1000, Height = 480, WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    Background = Brushes.Black, Topmost = true, Style = (Style)Application.Current.FindResource(typeof(Window))
+                };
+                var panel = new StackPanel { Margin = new Thickness(30) };
+                var labels = PracticeWindow.Samples.Take(2).Select(x => new TextBlock
+                { Text = x.Text, FontFamily = new FontFamily("Segoe UI"), FontSize = 28, Foreground = Brushes.White, Height = 150 }).ToArray();
+                foreach (var label in labels) panel.Children.Add(label);
+                multi.Content = panel; multi.Show(); multi.Activate(); await Task.Delay(350);
+                try
+                {
+                    var regions = labels.Select(label =>
+                    {
+                        var p = label.PointToScreen(new Point()); var q = label.PointToScreen(new Point(label.ActualWidth, label.ActualHeight));
+                        return new CaptureRegion((int)p.X, (int)p.Y, (int)(q.X - p.X), (int)(q.Y - p.Y));
+                    }).ToArray();
+                    using var fast = new ScreenTextSource(regions[0], "en-US", PracticeWindow.Samples[0].Text, fastMode: true);
+                    var clock = System.Diagnostics.Stopwatch.StartNew();
+                    var fastText = await fast.ReadAsync(timeout.Token);
+                    report["fastDesktopFirstReadMs"] = clock.ElapsedMilliseconds;
+                    report["fastDesktopEngine"] = fast.LastRecognition?.Engine;
+                    report["fastDesktopPassed"] = fastText == PracticeWindow.Samples[0].Text && fast.LastRecognition?.Engine.Contains("快速字幕") == true;
+                    report["multipleIndependentAreasPassed"] = await window.VerifyMultipleAreasAsync(regions, mockHttp, (w, file) => Render(w, Path.Combine(directory, file)), timeout.Token);
+                }
+                finally { multi.Close(); }
             }
             report["success"] = report.GetValueOrDefault("desktopCaptureOcrPassed") is true
                 && report.GetValueOrDefault("generatedImageOcrPassed") is true
@@ -156,6 +183,7 @@ internal static class Diagnostics
                 && report.GetValueOrDefault("diagnosticExportPassed") is true;
             report["success"] = report["success"] is true && report.GetValueOrDefault("singleTranslationPassed") is true;
             report["success"] = report["success"] is true && report.GetValueOrDefault("diagnosticLayoutPassed") is true;
+            report["success"] = report["success"] is true && report.GetValueOrDefault("fastDesktopPassed") is true && report.GetValueOrDefault("multipleIndependentAreasPassed") is true;
         }
         catch (Exception ex) { report["error"] = ex.ToString(); report["success"] = false; }
         finally
@@ -178,11 +206,17 @@ internal static class Diagnostics
 
     private sealed class DiagnosticHandler : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var body = request.Content == null ? "" : await request.Content.ReadAsStringAsync(cancellationToken);
+            using var json = JsonDocument.Parse(body);
+            var text = json.RootElement.GetProperty("messages")[1].GetProperty("content").GetString();
+            var translation = text == PracticeWindow.Samples[1].Text ? PracticeWindow.Samples[1].Translation : PracticeWindow.Samples[0].Translation;
+            return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("""{"choices":[{"finish_reason":"stop","message":{"content":"在黎明前找到古代遗物。"}}]}""")
-            });
+                Content = new StringContent(JsonSerializer.Serialize(new { choices = new[] { new { finish_reason = "stop", message = new { content = translation } } } }))
+            };
+        }
     }
 
     private static void Render(Window window, string path)

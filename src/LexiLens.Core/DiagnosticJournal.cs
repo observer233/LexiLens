@@ -73,6 +73,8 @@ public sealed class DiagnosticJournal(string directory)
             model = settings.Provider == TranslationProvider.Cloud ? profile.Model : settings.Provider == TranslationProvider.Ollama ? settings.OllamaModel : "MyMemory",
             ocrMode = settings.OcrMode.ToString(), imageMode = settings.OcrImageMode.ToString(), language = settings.SourceLanguage,
             regionSize = settings.Region == null ? null : new { settings.Region.Width, settings.Region.Height },
+            areaSizes = settings.CaptureAreas().Select(x => new { x.Region.Width, x.Region.Height }),
+            fastMode = settings.FastMode, fastIntervalMs = settings.FastIntervalMs, requestIntervalMs = settings.RequestIntervalMs,
             scanIntervalMs = settings.ScanIntervalMs, events = Snapshot()
         }, new JsonSerializerOptions(Options) { WriteIndented = true });
     }

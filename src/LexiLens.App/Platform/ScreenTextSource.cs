@@ -3,6 +3,7 @@ using Windows.Globalization;
 using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
 using Windows.Storage.Streams;
+using System.Threading.Channels;
 
 namespace LexiLens.App.Platform;
 
@@ -18,6 +19,12 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
     private string _lastText = "";
     private bool _localFailed;
     private string _fallbackReason = "";
+    private readonly bool _fastMode;
+    private readonly int _captureInterval;
+    private Channel<(byte[] Bytes, int Width, int Height)>? _frames;
+    private CancellationTokenSource? _captureCancellation;
+    private Task? _captureTask;
+    private long _droppedFrames;
     internal Recognition? LastRecognition { get; private set; }
     internal (byte[] Bytes, int Width, int Height)? LastFrame { get; private set; }
     internal Action<string>? Status { get; set; }
@@ -25,11 +32,13 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
     private readonly string? _expectedDiagnosticText;
 
     internal ScreenTextSource(CaptureRegion region, string language, string? expectedDiagnosticText = null,
-        OcrMode mode = OcrMode.Enhanced, OcrImageMode imageMode = OcrImageMode.Auto, Func<OcrWorker>? workerFactory = null)
+        OcrMode mode = OcrMode.Enhanced, OcrImageMode imageMode = OcrImageMode.Auto, Func<OcrWorker>? workerFactory = null,
+        bool fastMode = false, int captureInterval = 150)
     {
         _region = region;
         _expectedDiagnosticText = expectedDiagnosticText;
         _mode = mode; _imageMode = imageMode;
+        _fastMode = fastMode; _captureInterval = Math.Clamp(captureInterval, 100, 1000);
         _engine = OcrEngine.TryCreateFromLanguage(new Language(language));
         if (mode == OcrMode.Enhanced && (language.StartsWith("en", StringComparison.OrdinalIgnoreCase) || language.StartsWith("zh", StringComparison.OrdinalIgnoreCase)))
             _local = workerFactory?.Invoke() ?? new OcrWorker();
@@ -43,13 +52,11 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
     public Task<string> ReadAsync(CancellationToken cancellationToken) => Task.Run(async () =>
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var frame = ++_frame;
+        var frame = Interlocked.Increment(ref _frame);
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Progress?.Invoke(new(PipelineStage.Capture, PipelineState.Running, "CAPTURE_START", "正在截取选区", Frame: frame));
-        if (!NativeMethods.IsOnDesktop(_region)) throw new InvalidOperationException("屏幕布局发生变化，请重新框选识别区域。");
-        var bytes = NativeMethods.Capture(_region, (int)Math.Min(OcrEngine.MaxImageDimension, 2560), out var w, out var h);
+        var captured = _fastMode ? await ReadBufferedFrameAsync(cancellationToken) : CaptureFrame();
+        var (bytes, w, h) = captured;
         LastFrame = (bytes, w, h);
-        Progress?.Invoke(new(PipelineStage.Capture, PipelineState.Success, "CAPTURE_OK", $"选区 {w} × {h}", watch.ElapsedMilliseconds, Frame: frame));
         if (IsNearlyBlack(bytes)) Progress?.Invoke(new(PipelineStage.Capture, PipelineState.Warning, "CAPTURE_DARK", "截图接近全黑；检查窗口遮挡或切换无边框模式", Frame: frame));
         if (_lastBytes != null && bytes.AsSpan().SequenceEqual(_lastBytes))
         {
@@ -58,11 +65,25 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
         }
         Progress?.Invoke(new(PipelineStage.Ocr, PipelineState.Running, "OCR_START", _local != null && !_localFailed ? "增强识别中，首次加载最多等待 15 秒" : "Windows OCR 识别中", Frame: frame));
         string text;
-        if (_local != null && !_localFailed)
+        // Windows OCR usually returns small subtitle crops much sooner. Enhanced
+        // inference remains the fallback; accuracy mode keeps the original order.
+        var usedFastWindows = false;
+        if (_fastMode && _engine != null)
+        {
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var quick = await RecognizeBytesAsync(_engine, bytes, w, h, cancellationToken);
+                if (!string.IsNullOrWhiteSpace(quick))
+                { LastRecognition = new Recognition(quick, "Windows OCR · 快速字幕", null, clock.ElapsedMilliseconds); usedFastWindows = true; }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException && _local != null) { }
+        }
+        if (!usedFastWindows && _local != null && !_localFailed)
         {
             try
             {
-                LastRecognition = await _local.ReadAsync(bytes, w, h, _imageMode, cancellationToken);
+                LastRecognition = await _local.ReadAsync(bytes, w, h, _imageMode, cancellationToken, _fastMode);
                 if (string.IsNullOrWhiteSpace(LastRecognition.Text) && _engine != null)
                 {
                     var alternative = await RecognizeBytesAsync(_engine, bytes, w, h, cancellationToken);
@@ -82,7 +103,7 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
                 Status?.Invoke("本地增强引擎不可用，已切换 Windows OCR。可重新开始重试；请检查解压完整性和 VC++ x64 运行库。");
             }
         }
-        if (_local == null || _localFailed)
+        if (!usedFastWindows && (_local == null || _localFailed))
         {
             var clock = System.Diagnostics.Stopwatch.StartNew();
             text = await RecognizeBytesAsync(_engine!, bytes, w, h, cancellationToken);
@@ -97,6 +118,47 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
         return text;
     }, cancellationToken);
 
+    private (byte[] Bytes, int Width, int Height) CaptureFrame()
+    {
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        Progress?.Invoke(new(PipelineStage.Capture, PipelineState.Running, "CAPTURE_START", "正在截取选区"));
+        if (!NativeMethods.IsOnDesktop(_region)) throw new InvalidOperationException("屏幕布局发生变化，请重新框选识别区域。");
+        var bytes = NativeMethods.Capture(_region, (int)Math.Min(OcrEngine.MaxImageDimension, _fastMode ? 1920 : 2560), out var w, out var h);
+        Progress?.Invoke(new(PipelineStage.Capture, PipelineState.Success, "CAPTURE_OK", $"选区 {w} × {h}", clock.ElapsedMilliseconds));
+        return (bytes, w, h);
+    }
+
+    private async Task<(byte[] Bytes, int Width, int Height)> ReadBufferedFrameAsync(CancellationToken ct)
+    {
+        if (_frames == null)
+        {
+            _captureCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            _frames = Channel.CreateBounded<(byte[], int, int)>(new BoundedChannelOptions(2)
+            { SingleReader = true, SingleWriter = true, FullMode = BoundedChannelFullMode.DropOldest }, _ =>
+            {
+                if (Interlocked.Increment(ref _droppedFrames) % 20 == 1)
+                    Progress?.Invoke(new(PipelineStage.Ocr, PipelineState.Warning, "CAPTURE_BACKLOG", "识别落后于采样，仅保留最近两帧；可缩小区域或切换识别模式"));
+            });
+            var writer = _frames.Writer; var token = _captureCancellation.Token;
+            _captureTask = Task.Run(async () =>
+            {
+                try
+                {
+                    while (!token.IsCancellationRequested)
+                    {
+                        var clock = System.Diagnostics.Stopwatch.StartNew();
+                        writer.TryWrite(CaptureFrame());
+                        await Task.Delay(Math.Max(1, _captureInterval - (int)clock.ElapsedMilliseconds), token);
+                    }
+                    writer.TryComplete();
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested) { writer.TryComplete(); }
+                catch (Exception ex) { writer.TryComplete(ex); }
+            }, CancellationToken.None);
+        }
+        return await _frames.Reader.ReadAsync(ct);
+    }
+
     internal static async Task<string> RecognizeBytesAsync(OcrEngine engine, byte[] bytes, int width, int height, CancellationToken ct)
     {
         using var writer = new DataWriter();
@@ -105,7 +167,12 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
         var result = await engine.RecognizeAsync(bitmap).AsTask(ct);
         return string.Join("\n", result.Lines.Select(line => line.Text));
     }
-    public void Dispose() { _local?.Dispose(); _local = null; _lastBytes = null; LastFrame = null; }
+    public void Dispose()
+    {
+        _captureCancellation?.Cancel();
+        if (_captureTask is { } task) _ = task.ContinueWith(_ => _captureCancellation?.Dispose(), TaskScheduler.Default);
+        _local?.Dispose(); _local = null; _lastBytes = null; LastFrame = null;
+    }
     private static bool IsNearlyBlack(byte[] pixels)
     {
         for (var i = 0; i + 2 < pixels.Length; i += 64)

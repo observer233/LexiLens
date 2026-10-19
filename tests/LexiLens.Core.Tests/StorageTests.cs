@@ -20,7 +20,8 @@ public class StorageTests
             var settings = new AppSettings { ScanIntervalMs = 1234, Region = new CaptureRegion(-100, 20, 80, 80) };
             store.Save("settings.json", settings);
             var restored = store.Load("settings.json", new AppSettings());
-            Assert.Equal(settings, restored with { CloudProfiles = settings.CloudProfiles });
+            Assert.Equal(settings, restored with { CloudProfiles = settings.CloudProfiles, Areas = settings.Areas });
+            Assert.Equal(settings.Areas, restored.Areas);
             Assert.Equal(settings.CloudProfiles, restored.CloudProfiles);
             Assert.False(File.Exists(Path.Combine(directory, "settings.json.tmp")));
         }

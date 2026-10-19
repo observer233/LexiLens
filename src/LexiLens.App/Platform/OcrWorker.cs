@@ -16,7 +16,7 @@ internal sealed class OcrWorker(bool stallForDiagnostics = false, int initialTim
     internal bool WasTerminated { get; private set; }
     internal bool WasConnected { get; private set; }
 
-    internal async Task<Recognition> ReadAsync(byte[] bytes, int width, int height, OcrImageMode mode, CancellationToken ct)
+    internal async Task<Recognition> ReadAsync(byte[] bytes, int width, int height, OcrImageMode mode, CancellationToken ct, bool fast = false)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(_process == null ? TimeSpan.FromMilliseconds(initialTimeoutMs) : TimeSpan.FromSeconds(8));
@@ -25,7 +25,7 @@ internal sealed class OcrWorker(bool stallForDiagnostics = false, int initialTim
             if (_process == null) await StartAsync(timeout.Token);
             using var header = new MemoryStream();
             using (var writer = new BinaryWriter(header, Encoding.UTF8, leaveOpen: true))
-            { writer.Write(bytes.Length); writer.Write(width); writer.Write(height); writer.Write((int)mode); }
+            { writer.Write(bytes.Length); writer.Write(width); writer.Write(height); writer.Write((int)mode); writer.Write(fast); }
             await _pipe!.WriteAsync(header.ToArray(), timeout.Token);
             await _pipe.WriteAsync(bytes, timeout.Token);
             await _pipe.FlushAsync(timeout.Token);
@@ -73,9 +73,10 @@ internal sealed class OcrWorker(bool stallForDiagnostics = false, int initialTim
             int length;
             try { length = input.ReadInt32(); } catch (EndOfStreamException) { break; }
             var width = input.ReadInt32(); var height = input.ReadInt32(); var mode = (OcrImageMode)input.ReadInt32();
+            var fast = input.ReadBoolean();
             if (width is < 1 or > 2560 || height is < 1 or > 2560 || length != checked(width * height * 4) || !Enum.IsDefined(mode)) return;
             var bytes = input.ReadBytes(length); if (bytes.Length != length) return;
-            try { output.WriteLine(JsonSerializer.Serialize(new WorkerReply(ocr.Recognize(bytes, width, height, mode, CancellationToken.None), null))); }
+            try { output.WriteLine(JsonSerializer.Serialize(new WorkerReply(ocr.Recognize(bytes, width, height, mode, CancellationToken.None, fast), null))); }
             catch (Exception ex) { output.WriteLine(JsonSerializer.Serialize(new WorkerReply(null, ex.GetType().Name))); }
         }
     }
