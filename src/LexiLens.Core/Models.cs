@@ -1,6 +1,14 @@
 namespace LexiLens.Core;
 
-public enum TranslationProvider { MyMemory, Ollama }
+public enum TranslationProvider { MyMemory, Ollama, Cloud }
+
+public sealed record CloudProfile
+{
+    public string Model { get; init; } = "";
+    public string Endpoint { get; init; } = "";
+    public string AccountId { get; init; } = "";
+    public bool CreditUseAcknowledged { get; init; }
+}
 
 public sealed record CaptureRegion(int X, int Y, int Width, int Height)
 {
@@ -14,7 +22,10 @@ public sealed record AppSettings
     public string SourceLanguage { get; init; } = "en-US";
     public string TargetLanguage { get; init; } = "zh-CN";
     public string OllamaEndpoint { get; init; } = "http://localhost:11434";
-    public string OllamaModel { get; init; } = "qwen3:4b";
+    public string OllamaModel { get; init; } = "qwen2.5:3b";
+    public string CloudServiceId { get; init; } = "zhipu";
+    public Dictionary<string, CloudProfile> CloudProfiles { get; init; } = new();
+    public bool OnboardingCompleted { get; init; }
     public int ScanIntervalMs { get; init; } = 700;
     public double OverlayOpacity { get; init; } = 0.92;
     public double FontSize { get; init; } = 21;
@@ -30,7 +41,9 @@ public sealed record AppSettings
         SourceLanguage = string.IsNullOrWhiteSpace(SourceLanguage) ? "en-US" : SourceLanguage,
         TargetLanguage = "zh-CN",
         OllamaEndpoint = string.IsNullOrWhiteSpace(OllamaEndpoint) ? "http://localhost:11434" : OllamaEndpoint.Trim(),
-        OllamaModel = string.IsNullOrWhiteSpace(OllamaModel) ? "qwen3:4b" : OllamaModel.Trim(),
+        OllamaModel = string.IsNullOrWhiteSpace(OllamaModel) ? "qwen2.5:3b" : OllamaModel.Trim(),
+        CloudServiceId = ProviderCatalog.Find(CloudServiceId)?.Id ?? "zhipu",
+        CloudProfiles = CloudProfiles ?? new(),
         Provider = Enum.IsDefined(Provider) ? Provider : TranslationProvider.MyMemory
     };
 }

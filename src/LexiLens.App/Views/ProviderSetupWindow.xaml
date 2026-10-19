@@ -1,0 +1,59 @@
+<Window x:Class="LexiLens.App.Views.ProviderSetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LexiLens · 翻译服务向导" Width="790" Height="820" MinWidth="650" MinHeight="620"
+        WindowStartupLocation="CenterOwner" Style="{StaticResource {x:Type Window}}">
+  <Grid Background="{StaticResource Bg}"><Grid Margin="26">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <StackPanel Margin="0,0,0,18">
+      <TextBlock Text="选一种方式，开始读懂游戏。" FontSize="24" FontWeight="SemiBold"/>
+      <TextBlock Text="不填密钥也能试用；自己的免费额度也可以接进来。" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,0"/>
+    </StackPanel>
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0">
+      <StackPanel>
+        <TextBlock Text="1  选择使用方式" Foreground="{StaticResource Accent}" FontSize="13" Margin="0,0,0,9"/>
+        <ComboBox x:Name="ModeCombo" SelectionChanged="ModeChanged">
+          <ComboBoxItem Content="直接试用 · MyMemory，无需账号或密钥"/>
+          <ComboBoxItem Content="本地离线 · Ollama，需要先下载模型"/>
+          <ComboBoxItem Content="使用自己的 AI 平台额度 · 选择平台并粘贴密钥"/>
+        </ComboBox>
+        <Border x:Name="QuickPanel" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="18">
+          <StackPanel><TextBlock Text="下载后直接体验" FontSize="16" FontWeight="SemiBold"/><TextBlock Text="MyMemory 无需密钥。识别文字会发给该服务，截图留在本机。有使用限额，适合先试任务文字；持续字幕可改用自己的 AI 额度。" Foreground="{StaticResource Muted}" FontSize="12" LineHeight="20" Margin="0,10,0,0"/></StackPanel>
+        </Border>
+        <StackPanel x:Name="LocalPanel" Visibility="Collapsed" Margin="0,16,0,0">
+          <Border Style="{StaticResource Card}" Padding="18"><StackPanel>
+            <TextBlock Text="首次准备一次，之后直接使用" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="先安装 Ollama，返回后读取模型。还没有模型时，可点击下载推荐模型（约 1.9 GB，需联网，会占用磁盘；运行时与游戏共用显卡）。" Foreground="{StaticResource Muted}" FontSize="12" LineHeight="20" Margin="0,10,0,12"/>
+            <WrapPanel><Button Content="获取 Ollama" Click="OpenOllama" Margin="0,0,8,8"/><Button x:Name="LocalListButton" Content="检测并读取本机模型" Click="LoadLocalModels" Margin="0,0,8,8"/><Button x:Name="PullButton" Content="下载推荐 3B 模型" Click="PullModel" Margin="0,0,0,8"/></WrapPanel>
+            <TextBlock Text="已安装的模型" Foreground="{StaticResource Muted}" Margin="0,8,0,8" FontSize="12"/><ComboBox x:Name="LocalModelCombo" IsEditable="True"/>
+            <Expander Header="高级：自定义 Ollama 地址" Foreground="#B8C0CA" Margin="0,14,0,0"><TextBox x:Name="LocalEndpointInput" Margin="0,8,0,0"/></Expander>
+          </StackPanel></Border>
+        </StackPanel>
+        <StackPanel x:Name="CloudPanel" Visibility="Collapsed" Margin="0,18,0,0">
+          <TextBlock Text="2  选择平台" Foreground="{StaticResource Accent}" FontSize="13"/>
+          <CheckBox x:Name="ShowAllCheck" Content="也显示赠送额度、付费及自定义平台" Checked="FilterChanged" Unchecked="FilterChanged"/>
+          <ComboBox x:Name="ServiceCombo" DisplayMemberPath="DisplayName" SelectionChanged="ServiceChanged"/>
+          <TextBlock x:Name="PolicyText" Foreground="{StaticResource Accent}" FontSize="12" LineHeight="20" Margin="0,12,0,0"/>
+          <TextBlock Text="免费政策核对：2026-10-20。软件无法读取你的余额，也无法阻止已启用计费的账号在平台扣费；请在平台设置免费额度用完即停。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18" Margin="0,7,0,12"/>
+          <WrapPanel><Button Content="获取密钥 · 官方页面 ↗" Click="OpenKeyPage" Margin="0,0,8,0"/><Button Content="查看平台说明 ↗" Click="OpenDocs"/></WrapPanel>
+          <StackPanel x:Name="AccountPanel" Visibility="Collapsed" Margin="0,15,0,0"><TextBlock Text="Cloudflare Account ID（32 位）" Foreground="{StaticResource Muted}" FontSize="12"/><TextBox x:Name="AccountInput" Margin="0,7,0,0" LostFocus="ScopeChanged"/></StackPanel>
+          <TextBlock x:Name="KeyLabel" Text="3  粘贴自己的 API Key" Foreground="{StaticResource Accent}" FontSize="13" Margin="0,20,0,8"/>
+          <PasswordBox x:Name="KeyInput" Background="#111316" Foreground="#EEF0F4" BorderBrush="#30343B" Padding="10,8" FontSize="14"/>
+          <TextBlock Text="密钥仅用 Windows 当前账号加密保存在本机；不写入普通设置或导出生词。切换平台不会共用密钥。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18" Margin="0,7,0,0"/>
+          <Button Content="清除此平台本机密钥" Click="ForgetKey" HorizontalAlignment="Left" Padding="9,5" FontSize="10" Margin="0,7,0,0"/>
+          <Grid Margin="0,18,0,8"><TextBlock Text="4  选择模型" Foreground="{StaticResource Accent}" FontSize="13"/><Button x:Name="FetchModelsButton" Content="读取账号模型列表" Click="FetchModels" HorizontalAlignment="Right" Padding="10,5" FontSize="11"/></Grid>
+          <ComboBox x:Name="CloudModelCombo" IsEditable="True" SelectionChanged="ModelChanged" LostKeyboardFocus="ModelFocusLost"/>
+          <TextBlock x:Name="ModelNotice" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18" Margin="0,7,0,0"/>
+          <CheckBox x:Name="CreditCheck" Content="我已确认此账号、模型及地址有可用额度，接受平台可能产生的费用" Visibility="Collapsed"/>
+          <Expander Header="高级：自定义服务地址（一般无需修改）" Foreground="#B8C0CA" Margin="0,12,0,0">
+            <StackPanel><TextBlock x:Name="DefaultEndpointLabel" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,8,0,7"/><TextBox x:Name="CloudEndpointInput" LostFocus="ScopeChanged"/><TextBlock Text="留空使用官方预设。填写 API 根地址；改地址会要求重新填写或读取对应密钥。" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,7,0,0"/></StackPanel>
+          </Expander>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+    <StackPanel Grid.Row="2" Margin="0,18,0,0">
+      <TextBlock x:Name="ResultText" Text="测试会向所选服务发送一次固定英文短句，可能消耗你的 API 额度。" Foreground="{StaticResource Muted}" FontSize="12" LineHeight="19" MaxHeight="90"/>
+      <Grid Margin="0,13,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Button x:Name="TestButton" Content="仅测试连接" Click="TestConnection" HorizontalAlignment="Left"/><Button Grid.Column="1" Content="取消" Click="Cancel" Margin="0,0,10,0"/><Button x:Name="UseButton" Grid.Column="2" Content="测试并使用  →" Click="TestAndUse" Style="{StaticResource Primary}"/></Grid>
+    </StackPanel>
+  </Grid></Grid>
+</Window>

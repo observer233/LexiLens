@@ -16,6 +16,7 @@ namespace LexiLens.App;
 public partial class MainWindow : Window
 {
     private readonly LocalStore _store;
+    private readonly CredentialVault _vault;
     private readonly HttpClient _http = new(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(45) };
     private AppSettings _settings;
     private TranslationClient _translator;
@@ -28,14 +29,16 @@ public partial class MainWindow : Window
     private bool _transition, _closing, _closeReady;
     private string _source = "", _translation = "";
     private bool _preview;
+    private string? _expectedDiagnosticText;
 
     public MainWindow(string? dataDirectory = null)
     {
         _store = new LocalStore(dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LexiLens"));
+        _vault = new CredentialVault(_store.DirectoryPath);
         InitializeComponent();
         _settings = _store.Load("settings.json", new AppSettings()).Sanitize();
         _words = _store.Load("vocabulary.json", new List<VocabularyEntry>());
-        _translator = new TranslationClient(_http, _settings);
+        _translator = CreateTranslator();
         var languages = ScreenTextSource.Languages().Select(x => new LanguageOption(x.Tag, x.Name)).ToList();
         LanguageCombo.ItemsSource = languages;
         LanguageCombo.SelectedValue = _settings.SourceLanguage;
@@ -45,8 +48,6 @@ public partial class MainWindow : Window
             languages.Add(new LanguageOption(_settings.SourceLanguage, _settings.SourceLanguage + " · 未安装 OCR"));
             LanguageCombo.Items.Refresh(); LanguageCombo.SelectedValue = _settings.SourceLanguage;
         }
-        ProviderCombo.SelectedIndex = (int)_settings.Provider;
-        EndpointInput.Text = _settings.OllamaEndpoint; ModelInput.Text = _settings.OllamaModel;
         IntervalInput.Text = _settings.ScanIntervalMs.ToString(); OriginalCheck.IsChecked = _settings.ShowOriginal;
         FontSlider.Value = _settings.FontSize; OpacitySlider.Value = _settings.OverlayOpacity;
         DataLocation.Text = "设置与生词仅保存在本机：" + _store.DirectoryPath;
@@ -60,6 +61,23 @@ public partial class MainWindow : Window
             if (_hotkeys.Conflicts.Count > 0) MessageLabel.Text = "快捷键被占用：" + string.Join("、", _hotkeys.Conflicts) + "。仍可使用界面按钮。";
         };
         Closing += OnClosing;
+        if (dataDirectory == null && !_settings.OnboardingCompleted)
+            Loaded += async (_, _) => await SetupProviderAsync();
+    }
+
+    private TranslationClient CreateTranslator()
+    {
+        var key = "";
+        if (_settings.Provider == TranslationProvider.Cloud)
+        {
+            try
+            {
+                var preset = ProviderCatalog.Get(_settings.CloudServiceId);
+                key = _vault.Read(CredentialVault.Scope(preset.Id, ProviderCatalog.Endpoint(preset, ProviderCatalog.Profile(_settings))));
+            }
+            catch (Exception ex) { MessageLabel.Text = ex.Message; }
+        }
+        return new TranslationClient(_http, _settings, key);
     }
 
     private async void HandleHotkey(int id)
@@ -104,7 +122,8 @@ public partial class MainWindow : Window
                 return;
             }
             if (!NativeMethods.IsOnDesktop(_settings.Region)) throw new InvalidOperationException("保存的区域不在当前屏幕内，请重新框选。");
-            var textSource = new ScreenTextSource(_settings.Region, _settings.SourceLanguage);
+            if (_settings.Provider == TranslationProvider.Cloud) _translator.Cloud.Validate(true);
+            var textSource = new ScreenTextSource(_settings.Region, _settings.SourceLanguage, _expectedDiagnosticText);
             EnsureOverlay(); _overlay!.Show(); _overlay.SetLocked(true);
             _source = ""; _translation = ""; _preview = false;
             _overlay.SetContent("", "等待识别游戏文字…", "正在识别");
@@ -254,18 +273,15 @@ public partial class MainWindow : Window
         {
             if (!int.TryParse(IntervalInput.Text, out var interval) || interval < 350 || interval > 5000)
                 throw new ArgumentException("扫描间隔需填写 350 到 5000 之间的整数。");
-            var provider = (TranslationProvider)ProviderCombo.SelectedIndex;
-            if (provider == TranslationProvider.Ollama) TranslationClient.ValidateOllamaEndpoint(EndpointInput.Text);
             var next = (_settings with
             {
-                Provider = provider, SourceLanguage = LanguageCombo.SelectedValue as string ?? "en-US",
-                OllamaEndpoint = EndpointInput.Text, OllamaModel = ModelInput.Text,
+                SourceLanguage = LanguageCombo.SelectedValue as string ?? "en-US",
                 ScanIntervalMs = interval, OverlayOpacity = OpacitySlider.Value, FontSize = FontSlider.Value,
                 ShowOriginal = OriginalCheck.IsChecked == true
             }).Sanitize();
             await StopAsync();
             _store.Save("settings.json", next); _settings = next;
-            _translator = new TranslationClient(_http, _settings);
+            _translator = CreateTranslator();
             _overlay?.ApplySettings(_settings); RefreshSummary();
             MessageLabel.Text = "设置已保存。重新开始后使用新设置。";
         }
@@ -277,16 +293,42 @@ public partial class MainWindow : Window
     {
         RegionLabel.Text = _settings.Region?.ToString() ?? "先框选游戏中的任务详情或字幕区域";
         LanguageSummary.Text = _settings.SourceLanguage + " → 简体中文";
-        ProviderSummary.Text = _settings.Provider == TranslationProvider.MyMemory ? "MyMemory · 免密钥" : "Ollama · " + _settings.OllamaModel;
-        PrivacySummary.Text = _settings.Provider == TranslationProvider.MyMemory ? "文字发送至 MyMemory；截图仅在本机处理。" : "文字发送至配置的 Ollama 地址；本机地址可离线使用。";
+        ProviderSummary.Text = _settings.Provider switch
+        {
+            TranslationProvider.MyMemory => "MyMemory · 无需密钥",
+            TranslationProvider.Ollama => "Ollama · " + _settings.OllamaModel,
+            _ => ProviderCatalog.Get(_settings.CloudServiceId).Name + " · " + ProviderCatalog.Profile(_settings).Model
+        };
+        SettingsProviderSummary.Text = ProviderSummary.Text;
+        PrivacySummary.Text = _settings.Provider switch
+        {
+            TranslationProvider.MyMemory => "文字发送至 MyMemory；截图仅在本机处理。",
+            TranslationProvider.Ollama => "文字发送至配置的 Ollama 地址；本机地址可离线使用。",
+            _ => "识别文字发送至所选 AI 服务；不上传截图。密钥在本机加密保存。"
+        };
+        ProviderNotice.Text = PrivacySummary.Text + (_settings.Provider == TranslationProvider.Cloud ? "\n" + ProviderCatalog.Get(_settings.CloudServiceId).Notice : "");
     }
 
-    private void ProviderChanged(object sender, SelectionChangedEventArgs e)
+    private async void SetupProvider(object sender, RoutedEventArgs e) => await SetupProviderAsync();
+    private async Task SetupProviderAsync()
     {
-        if (OllamaOptions == null || ProviderNotice == null) return;
-        var local = ProviderCombo.SelectedIndex == 1;
-        OllamaOptions.Visibility = local ? Visibility.Visible : Visibility.Collapsed;
-        ProviderNotice.Text = local ? "使用本机 Ollama 时，截图和文字均留在本机。请先启动服务并下载模型。" : "点击开始后，识别文字会发送至第三方 MyMemory 服务。免密钥但有服务额度，翻译质量和延迟受网络影响。";
+        if (_transition || _closing) return;
+        _transition = true;
+        try
+        {
+            await StopAsync();
+            _overlay?.Hide();
+            var wizard = new ProviderSetupWindow(_settings, _http, _vault) { Owner = this };
+            if (wizard.ShowDialog() == true && wizard.SelectedSettings is { } selected)
+            {
+                selected = selected with { OnboardingCompleted = true };
+                _store.Save("settings.json", selected); _settings = selected;
+                _translator = CreateTranslator(); RefreshSummary();
+                MessageLabel.Text = "翻译服务已连接并保存。框选区域后点击「开始翻译」。";
+            }
+        }
+        catch (Exception ex) { MessageLabel.Text = LiveSession.FriendlyError(ex); }
+        finally { _transition = false; }
     }
 
     private void ShowPage(Grid? grid, ScrollViewer? scroll, Button selected)
@@ -321,6 +363,7 @@ public partial class MainWindow : Window
     internal async Task<(string Source, string Translation)> VerifyLiveSessionAsync(CaptureRegion region, CancellationToken ct)
     {
         _settings = _settings with { Region = region, ScanIntervalMs = 350 };
+        _expectedDiagnosticText = PracticeWindow.Samples[0].Text;
         RefreshSummary();
         await ToggleAsync();
         try
@@ -329,7 +372,7 @@ public partial class MainWindow : Window
                 await Task.Delay(100, ct);
             return (_source, _translation);
         }
-        finally { await StopAsync(); }
+        finally { await StopAsync(); _expectedDiagnosticText = null; }
     }
 
     internal void RenderSettingsForDiagnostics() => ShowPage(null, SettingsPage, SettingsNav);

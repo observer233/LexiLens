@@ -10,6 +10,7 @@ TestResults/
 *.log
 settings.json
 vocabulary.json
+credentials.dat*
 .env
 .env.*
 !.env.example

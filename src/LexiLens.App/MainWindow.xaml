@@ -17,7 +17,7 @@
         <StackPanel DockPanel.Dock="Bottom">
           <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,15"/>
           <TextBlock Text="为每一次看懂而设计" FontSize="11" Foreground="{StaticResource Muted}"/>
-          <TextBlock Text="v0.1.0  /  Windows" FontSize="10" Foreground="#66707D" Margin="0,7,0,0"/>
+          <TextBlock Text="v0.2.0  /  Windows" FontSize="10" Foreground="#66707D" Margin="0,7,0,0"/>
         </StackPanel>
         <StackPanel>
           <Button x:Name="LiveNav" Content="◉   实时翻译" Style="{StaticResource Nav}" Click="ShowLive" Background="#2B2B28" Foreground="{StaticResource Accent}"/>
@@ -75,7 +75,7 @@
                 <TextBlock Text="翻译服务" Foreground="{StaticResource Muted}" FontSize="11"/>
                 <TextBlock x:Name="ProviderSummary" Text="MyMemory · 免密钥" FontSize="13" Margin="0,6,0,14"/>
                 <TextBlock x:Name="PrivacySummary" Text="文字发送至 MyMemory；截图仅在本机处理。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18"/>
-                <Button Content="调整设置  →" Click="ShowSettings" Margin="0,16,0,0" FontSize="11" Padding="10,8"/>
+                <Button Content="选平台 / 接入免费额度  →" Click="SetupProvider" Margin="0,16,0,0" FontSize="11" Padding="10,8"/>
               </StackPanel>
             </Border>
             <Border Background="#20221F" CornerRadius="12" Padding="20">
@@ -105,14 +105,9 @@
             <TextBlock Text="识别与翻译" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,18"/>
             <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions>
               <StackPanel><TextBlock Text="屏幕文字的语言（Windows OCR）" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><ComboBox x:Name="LanguageCombo" DisplayMemberPath="Name" SelectedValuePath="Tag"/></StackPanel>
-              <StackPanel Grid.Column="2"><TextBlock Text="翻译服务" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><ComboBox x:Name="ProviderCombo" SelectionChanged="ProviderChanged"><ComboBoxItem Content="MyMemory · 免密钥 / 联网"/><ComboBoxItem Content="Ollama · 本地模型"/></ComboBox></StackPanel>
+              <StackPanel Grid.Column="2"><TextBlock Text="翻译服务" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><TextBlock x:Name="SettingsProviderSummary" FontSize="13"/><Button Content="打开翻译服务向导" Click="SetupProvider" Margin="0,9,0,0"/></StackPanel>
             </Grid>
             <TextBlock x:Name="ProviderNotice" Foreground="{StaticResource Accent}" FontSize="11" LineHeight="19" Margin="0,15,0,0"/>
-            <StackPanel x:Name="OllamaOptions" Visibility="Collapsed" Margin="0,15,0,0">
-              <TextBlock Text="Ollama 服务地址" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,7"/><TextBox x:Name="EndpointInput"/>
-              <TextBlock Text="已下载的模型名称" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,7"/><TextBox x:Name="ModelInput"/>
-              <TextBlock Text="先安装 Ollama 并下载模型。本机 HTTP 地址可离线使用；远程地址需 HTTPS，文字将发送到该服务器。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18" Margin="0,10,0,0"/>
-            </StackPanel>
             <TextBlock Text="扫描间隔（毫秒，350–5000）" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,17,0,7"/><TextBox x:Name="IntervalInput" Width="160" HorizontalAlignment="Left"/>
             <TextBlock Text="连续两次识别一致后翻译；实际延迟还取决于翻译服务。较短间隔会增加 CPU 使用。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,9,0,0"/>
           </StackPanel></Border>

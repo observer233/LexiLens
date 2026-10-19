@@ -8,18 +8,25 @@ Select a subtitle or quest region, read the original text alongside a Simplified
 
 ![LexiLens desktop application with a labeled sample preview](docs/images/main.png)
 
-## v0.1.0
+## v0.2.0
 
 - Native WPF app with local Windows OCR and GDI screen capture.
 - Region selection on individual monitors, including monitors with negative coordinates.
 - Movable, resizable, always-on-top bilingual overlay with mouse click-through.
 - Global shortcuts for start/pause, region selection, visibility and click-through.
 - Two matching OCR scans before translation, in-memory deduplication, cancellation of superseded requests, and stale-result protection.
-- MyMemory translation without an API key, or a separately installed Ollama model.
+- Setup wizard with MyMemory, Ollama, 24 cloud-platform presets, and a custom compatible endpoint. Bring your own API key; keys are encrypted for the current Windows user and isolated by provider and endpoint.
+- Model discovery, connection tests, separate free-tier/trial/paid classifications, and local model detection/download controls. No automatic provider or paid-model fallback.
 - Click English words to look them up, edit definitions, save their context and export vocabulary as CSV.
 - A small practice window to try the real capture and OCR workflow before launching a game.
 
 **Early working prototype.** Desktop capture, OCR, a live MyMemory translation, and overlay behavior have been verified on a Windows practice window. Compatibility with individual games, HDR and mixed-DPI displays has not been established. The initial preview contains a fixed example and is explicitly labeled.
+
+## Cloud platforms
+
+See the [platform catalog and conditions](docs/AI_PLATFORMS.md). A free tier, a trial credit, and a paid API are different. The app includes endpoint presets, not shared keys or guaranteed free access. Most providers require an individual account/API key. Account billing settings can still incur charges even for a model with a free tier; set provider-side spending controls.
+
+Protocol simulations cover the cloud adapters; real credentials have not been tested for every provider.
 
 ## Try it
 
@@ -38,7 +45,7 @@ Select a subtitle or quest region, read the original text alongside a Simplified
 
 The default provider sends **recognized text to MyMemory**. Screenshots stay on the device and are not saved during normal use. MyMemory has usage limits and is intended here for quick trials and occasional quest text; continuous subtitles may exhaust its quota. Local Ollama keeps text on the device when configured with a loopback endpoint; remote endpoints receive the recognized text. Models must be downloaded separately.
 
-Only settings and words you explicitly save, including their context, are persisted under `%LOCALAPPDATA%\LexiLens`. There is no telemetry, game injection, memory reading, driver installation or administrator requirement.
+Settings, explicitly saved vocabulary/context, and a Windows DPAPI encrypted credential vault are persisted under `%LOCALAPPDATA%\LexiLens`. There is no telemetry, game injection, memory reading, driver installation or administrator requirement.
 
 ## Limitations
 

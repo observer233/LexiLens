@@ -6,7 +6,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>LexiLens</AssemblyName>
     <RootNamespace>LexiLens.App</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Description>Game screen translation overlay for language learners</Description>
   </PropertyGroup>
   <ItemGroup>

@@ -10,10 +10,12 @@ internal sealed class ScreenTextSource : ITextSource
 {
     private readonly CaptureRegion _region;
     private readonly OcrEngine _engine;
+    private readonly string? _expectedDiagnosticText;
 
-    internal ScreenTextSource(CaptureRegion region, string language)
+    internal ScreenTextSource(CaptureRegion region, string language, string? expectedDiagnosticText = null)
     {
         _region = region;
+        _expectedDiagnosticText = expectedDiagnosticText;
         _engine = OcrEngine.TryCreateFromLanguage(new Language(language))
             ?? throw new InvalidOperationException($"未安装 {language} 的 Windows OCR 语言包。请在 Windows 设置 → 时间和语言 → 语言和区域中添加对应语言及其光学字符识别功能，然后重启本应用。");
     }
@@ -26,7 +28,10 @@ internal sealed class ScreenTextSource : ITextSource
         cancellationToken.ThrowIfCancellationRequested();
         if (!NativeMethods.IsOnDesktop(_region)) throw new InvalidOperationException("屏幕布局发生变化，请重新框选识别区域。");
         var bytes = NativeMethods.Capture(_region, (int)Math.Min(OcrEngine.MaxImageDimension, 2560), out var w, out var h);
-        return await RecognizeBytesAsync(_engine, bytes, w, h, cancellationToken);
+        var text = await RecognizeBytesAsync(_engine, bytes, w, h, cancellationToken);
+        if (_expectedDiagnosticText != null && TextProcessing.Normalize(text) != TextProcessing.Normalize(_expectedDiagnosticText))
+            throw new InvalidOperationException("诊断练习文字被遮挡或识别不符，已停止，未将该内容发送翻译服务。");
+        return text;
     }, cancellationToken);
 
     internal static async Task<string> RecognizeBytesAsync(OcrEngine engine, byte[] bytes, int width, int height, CancellationToken ct)

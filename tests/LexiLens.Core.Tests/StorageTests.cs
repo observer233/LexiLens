@@ -14,11 +14,14 @@ public class StorageTests
         {
             File.WriteAllText(Path.Combine(directory, "settings.json"), "{broken");
             var store = new LocalStore(directory);
-            Assert.Equal(new AppSettings(), store.Load("settings.json", new AppSettings()));
+            var fallback = new AppSettings();
+            Assert.Same(fallback, store.Load("settings.json", fallback));
             Assert.Single(Directory.GetFiles(directory, "*.corrupt-*"));
             var settings = new AppSettings { ScanIntervalMs = 1234, Region = new CaptureRegion(-100, 20, 80, 80) };
             store.Save("settings.json", settings);
-            Assert.Equal(settings, store.Load("settings.json", new AppSettings()));
+            var restored = store.Load("settings.json", new AppSettings());
+            Assert.Equal(settings, restored with { CloudProfiles = settings.CloudProfiles });
+            Assert.Equal(settings.CloudProfiles, restored.CloudProfiles);
             Assert.False(File.Exists(Path.Combine(directory, "settings.json.tmp")));
         }
         finally { Directory.Delete(directory, true); }

@@ -4,8 +4,10 @@ using System.Text.Json;
 
 namespace LexiLens.Core;
 
-public sealed class TranslationClient(HttpClient http, AppSettings settings) : ITranslator
+public sealed class TranslationClient(HttpClient http, AppSettings settings, string apiKey = "") : ITranslator
 {
+    private readonly CloudTranslation _cloud = new(http, settings, apiKey);
+    public CloudTranslation Cloud => _cloud;
     private readonly Dictionary<string, string> _cache = new(StringComparer.Ordinal);
     private readonly Queue<string> _order = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -22,6 +24,7 @@ public sealed class TranslationClient(HttpClient http, AppSettings settings) : I
             {
                 TranslationProvider.MyMemory => await MyMemoryAsync(text, cancellationToken),
                 TranslationProvider.Ollama => await OllamaAsync(text, cancellationToken),
+                TranslationProvider.Cloud => await _cloud.TranslateAsync(text, cancellationToken),
                 _ => throw new InvalidOperationException("请选择有效的翻译服务。")
             };
             if (string.IsNullOrWhiteSpace(result)) throw new InvalidOperationException("翻译服务返回了空内容。请检查模型和服务配置。");

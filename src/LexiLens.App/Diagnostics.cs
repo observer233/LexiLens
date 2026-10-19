@@ -1,4 +1,6 @@
 using System.IO;
+using System.Net.Http;
+using System.Net;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,6 +29,30 @@ internal static class Diagnostics
             window.RenderSettingsForDiagnostics();
             Render(window, Path.Combine(directory, "settings.png"));
             window.RenderLiveForDiagnostics();
+            var vault = new CredentialVault(Path.Combine(directory, "vault-test"));
+            const string vaultScope = "diagnostic|https://example.invalid/";
+            const string dummyKey = "diagnostic-not-a-real-key";
+            vault.Save(vaultScope, dummyKey);
+            report["credentialVaultRoundTrip"] = vault.Read(vaultScope) == dummyKey;
+            var vaultBytes = File.ReadAllBytes(Path.Combine(directory, "vault-test", "credentials.dat"));
+            report["credentialVaultEncrypted"] = !System.Text.Encoding.UTF8.GetString(vaultBytes).Contains(dummyKey, StringComparison.Ordinal);
+            vault.Save(vaultScope, "");
+            report["credentialVaultDeletion"] = vault.Read(vaultScope) == "";
+            using var mockHttp = new HttpClient(new DiagnosticHandler());
+            var wizard = new ProviderSetupWindow(new AppSettings(), mockHttp, vault) { Owner = window };
+            wizard.Show();
+            report["providerWizardInteraction"] = await wizard.VerifyForDiagnosticsAsync();
+            Render(wizard, Path.Combine(directory, "providers.png"));
+            wizard.Close();
+            var applyWizard = new ProviderSetupWindow(new AppSettings(), mockHttp, vault) { Owner = window };
+            var watchdog = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            watchdog.Tick += (_, _) => { watchdog.Stop(); applyWizard.Close(); };
+            applyWizard.Loaded += async (_, _) => await applyWizard.ApplyForDiagnosticsAsync();
+            watchdog.Start();
+            var applied = applyWizard.ShowDialog();
+            watchdog.Stop();
+            report["providerWizardApply"] = applied == true && applyWizard.SelectedSettings?.Provider == TranslationProvider.Cloud
+                && vault.Read(CredentialVault.Scope("zhipu", new Uri("https://open.bigmodel.cn/api/paas/v4/"))) == dummyKey;
             var overlay = new OverlayWindow();
             overlay.SetContent(PracticeWindow.Samples[0].Text, PracticeWindow.Samples[0].Translation, "示例预览 · 非实时识别");
             overlay.Show();
@@ -55,15 +81,15 @@ internal static class Diagnostics
                 report["generatedImageOcr"] = recognized;
                 report["generatedImageOcrPassed"] = recognized.Contains("ancient relic", StringComparison.OrdinalIgnoreCase);
 
-                var practice = new PracticeWindow(); practice.Show(); practice.Activate();
+                var practice = new PracticeWindow { Topmost = true }; practice.Show(); practice.Activate();
                 await Task.Delay(500);
-                NativeMethods.GetWindowRect(new WindowInteropHelper(practice).Handle, out var bounds);
-                var source = new ScreenTextSource(new CaptureRegion(bounds.Left + 20, bounds.Top + 40, bounds.Right - bounds.Left - 40, bounds.Bottom - bounds.Top - 60), "en-US");
+                var region = practice.SubtitleRegion();
+                var source = new ScreenTextSource(region, "en-US", PracticeWindow.Samples[0].Text);
                 var captured = await source.ReadAsync(CancellationToken.None);
                 report["desktopCaptureOcr"] = captured;
                 report["desktopCaptureOcrPassed"] = TextProcessing.Normalize(captured).Contains("ancient relic", StringComparison.OrdinalIgnoreCase);
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(55));
-                var live = await window.VerifyLiveSessionAsync(new CaptureRegion(bounds.Left + 20, bounds.Top + 40, bounds.Right - bounds.Left - 40, bounds.Bottom - bounds.Top - 60), timeout.Token);
+                var live = await window.VerifyLiveSessionAsync(region, timeout.Token);
                 report["liveSource"] = live.Source;
                 report["liveTranslation"] = live.Translation;
                 report["liveSessionPassed"] = live.Source.Contains("ancient relic", StringComparison.OrdinalIgnoreCase)
@@ -75,7 +101,12 @@ internal static class Diagnostics
                 && report.GetValueOrDefault("generatedImageOcrPassed") is true
                 && report.GetValueOrDefault("clickThrough") is true
                 && report.GetValueOrDefault("clickThroughUnlock") is true
-                && report.GetValueOrDefault("liveSessionPassed") is true;
+                && report.GetValueOrDefault("liveSessionPassed") is true
+                && report.GetValueOrDefault("credentialVaultRoundTrip") is true
+                && report.GetValueOrDefault("credentialVaultEncrypted") is true
+                && report.GetValueOrDefault("credentialVaultDeletion") is true
+                && report.GetValueOrDefault("providerWizardInteraction") is true
+                && report.GetValueOrDefault("providerWizardApply") is true;
         }
         catch (Exception ex) { report["error"] = ex.ToString(); report["success"] = false; }
         finally
@@ -83,6 +114,15 @@ internal static class Diagnostics
             File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
             window.Close();
         }
+    }
+
+    private sealed class DiagnosticHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"choices":[{"finish_reason":"stop","message":{"content":"在黎明前找到古代遗物。"}}]}""")
+            });
     }
 
     private static void Render(Window window, string path)

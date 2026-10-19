@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using LexiLens.Core;
 
 namespace LexiLens.App.Views;
 
@@ -14,6 +15,14 @@ internal sealed class PracticeWindow : Window
         ("We must reach the outpost before dawn.", "我们必须在黎明前到达前哨站。")
     ];
     private int _index;
+    private TextBlock _subtitle = null!;
+
+    internal CaptureRegion SubtitleRegion()
+    {
+        var topLeft = _subtitle.PointToScreen(new Point(0, 0));
+        var bottomRight = _subtitle.PointToScreen(new Point(_subtitle.ActualWidth, _subtitle.ActualHeight));
+        return new CaptureRegion((int)topLeft.X, (int)topLeft.Y, (int)(bottomRight.X - topLeft.X), (int)(bottomRight.Y - topLeft.Y));
+    }
 
     internal PracticeWindow()
     {
@@ -25,6 +34,7 @@ internal sealed class PracticeWindow : Window
         panel.Children.Add(new TextBlock { Text = "THE FORGOTTEN VALLEY", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(233, 189, 130)), Margin = new Thickness(0, 0, 0, 22) });
         panel.Children.Add(new TextBlock { Text = "QUEST OBJECTIVE", FontSize = 13, Foreground = Brushes.LightGray, Margin = new Thickness(0, 0, 0, 12) });
         var subtitle = new TextBlock { Text = Samples[0].Text, FontFamily = new FontFamily("Segoe UI"), FontSize = 30, Foreground = Brushes.White, MinHeight = 100 };
+        _subtitle = subtitle;
         panel.Children.Add(subtitle);
         var next = new Button { Content = "下一句  →", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 22, 0, 15) };
         next.Click += (_, _) => subtitle.Text = Samples[++_index % Samples.Length].Text;
