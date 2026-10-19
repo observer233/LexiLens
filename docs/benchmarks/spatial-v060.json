@@ -1,0 +1,13 @@
+{
+  "automaticParagraphsPassed": true,
+  "inPlaceOverlayPassed": true,
+  "blankFrameRemovesOverlays": true,
+  "quickSelectionAutoTranslated": true,
+  "quickSelectionKeptFixedSession": true,
+  "gameFocusRestored": true,
+  "escapePreservesSelection": true,
+  "clearingQuickRestoresFixed": true,
+  "fixedSelectionAutoStarts": true,
+  "overlapHasOneOwner": true,
+  "success": true
+}

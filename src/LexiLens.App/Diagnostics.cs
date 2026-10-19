@@ -102,6 +102,7 @@ internal static class Diagnostics
                 var captured = await source.ReadAsync(CancellationToken.None);
                 report["desktopCaptureOcr"] = captured;
                 report["desktopCaptureOcrEngine"] = source.LastRecognition?.Engine;
+                report["enhancedOcrCoordinatesPassed"] = source.LastRecognition?.Blocks?.Any(x => x.Bounds.IsValid) == true;
                 report["desktopCaptureOcrPassed"] = TextProcessing.Normalize(captured).Contains("ancient relic", StringComparison.OrdinalIgnoreCase);
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(55));
                 var live = await window.VerifyLiveSessionAsync(region, timeout.Token);
@@ -162,6 +163,8 @@ internal static class Diagnostics
                     report["fastDesktopEngine"] = fast.LastRecognition?.Engine;
                     report["fastDesktopPassed"] = fastText == PracticeWindow.Samples[0].Text && fast.LastRecognition?.Engine.Contains("快速字幕") == true;
                     report["multipleIndependentAreasPassed"] = await window.VerifyMultipleAreasAsync(regions, mockHttp, (w, file) => Render(w, Path.Combine(directory, file)), timeout.Token);
+                    using var spatialTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(35));
+                    foreach (var pair in await window.VerifySpatialInteractionAsync(regions, mockHttp, (w, file) => Render(w, Path.Combine(directory, file)), spatialTimeout.Token, show => { foreach (var label in labels) label.Visibility = show ? Visibility.Visible : Visibility.Hidden; })) report[pair.Key] = pair.Value;
                 }
                 finally { multi.Close(); }
             }
@@ -184,6 +187,7 @@ internal static class Diagnostics
             report["success"] = report["success"] is true && report.GetValueOrDefault("singleTranslationPassed") is true;
             report["success"] = report["success"] is true && report.GetValueOrDefault("diagnosticLayoutPassed") is true;
             report["success"] = report["success"] is true && report.GetValueOrDefault("fastDesktopPassed") is true && report.GetValueOrDefault("multipleIndependentAreasPassed") is true;
+            foreach (var key in new[] { "enhancedOcrCoordinatesPassed", "automaticParagraphsPassed", "inPlaceOverlayPassed", "quickSelectionAutoTranslated", "quickSelectionKeptFixedSession", "gameFocusRestored", "escapePreservesSelection", "clearingQuickRestoresFixed", "fixedSelectionAutoStarts", "overlapHasOneOwner", "blankFrameRemovesOverlays" }) report["success"] = report["success"] is true && report.GetValueOrDefault(key) is true;
         }
         catch (Exception ex) { report["error"] = ex.ToString(); report["success"] = false; }
         finally
@@ -191,6 +195,33 @@ internal static class Diagnostics
             File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
             window.Close();
         }
+    }
+
+    internal static async Task RunSpatialAsync(MainWindow window, string directory)
+    {
+        Directory.CreateDirectory(directory);
+        var report = new Dictionary<string, object?>();
+        var scene = new Window { Title = "LexiLens 自动分段测试", Width = 1000, Height = 480, WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            Background = Brushes.Black, Topmost = true, Style = (Style)Application.Current.FindResource(typeof(Window)) };
+        try
+        {
+            var panel = new StackPanel { Margin = new Thickness(30) };
+            var labels = PracticeWindow.Samples.Take(2).Select(x => new TextBlock { Text = x.Text, FontFamily = new FontFamily("Segoe UI"), FontSize = 28, Foreground = Brushes.White, Height = 150 }).ToArray();
+            foreach (var label in labels) panel.Children.Add(label);
+            scene.Content = panel; scene.Show(); scene.Activate(); await Task.Delay(350);
+            var regions = labels.Select(label => { var p = label.PointToScreen(new Point()); var q = label.PointToScreen(new Point(label.ActualWidth, label.ActualHeight)); return new CaptureRegion((int)p.X, (int)p.Y, (int)(q.X - p.X), (int)(q.Y - p.Y)); }).ToArray();
+            var full = new CaptureRegion(regions[0].X, regions[0].Y, regions[0].Width, regions.Sum(x => x.Height));
+            var bytes = NativeMethods.Capture(full, 1920, out var w, out var h);
+            var engine = OcrEngine.TryCreateFromLanguage(new Language("en-US"))!;
+            var reading = await ScreenTextSource.RecognizeDetailedAsync(engine, bytes, w, h, CancellationToken.None,
+                boxes => File.WriteAllText(Path.Combine(directory, "fixture-words.json"), JsonSerializer.Serialize(boxes, new JsonSerializerOptions { WriteIndented = true })));
+            File.WriteAllText(Path.Combine(directory, "fixture-blocks.json"), JsonSerializer.Serialize(reading, new JsonSerializerOptions { WriteIndented = true }));
+            using var http = new HttpClient(new DiagnosticHandler()); using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            foreach (var pair in await window.VerifySpatialInteractionAsync(regions, http, (target, file) => Render(target, Path.Combine(directory, file)), timeout.Token, show => { foreach (var label in labels) label.Visibility = show ? Visibility.Visible : Visibility.Hidden; })) report[pair.Key] = pair.Value;
+            report["success"] = report.Values.All(x => x is true);
+        }
+        catch (Exception ex) { report["error"] = ex.ToString(); report["success"] = false; }
+        finally { scene.Close(); File.WriteAllText(Path.Combine(directory, "report.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true })); window.Close(); }
     }
 
     internal static async Task RunUiAsync(MainWindow window, string directory)

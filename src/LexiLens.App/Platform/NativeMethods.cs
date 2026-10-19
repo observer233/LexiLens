@@ -20,6 +20,8 @@ internal static class NativeMethods
     [DllImport("user32.dll")] internal static extern bool EnumDisplayMonitors(nint dc, nint clip, MonitorCallback callback, nint data);
     [DllImport("user32.dll")] internal static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] internal static extern bool GetWindowRect(nint hwnd, out Rect rect);
+    [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint hwnd);
     internal delegate bool WindowCallback(nint hwnd, nint data);
     [DllImport("user32.dll")] internal static extern bool EnumWindows(WindowCallback callback, nint data);
     [DllImport("user32.dll")] internal static extern bool IsWindowVisible(nint hwnd);

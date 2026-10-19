@@ -4,31 +4,28 @@ A Windows screen translation tool with a bilingual overlay and an English vocabu
 
 [Download](https://github.com/observer233/LexiLens/releases/latest) · [中文](README.md) · [Setup](docs/USER_GUIDE.md) · [Bug analysis](docs/BUG_ANALYSIS.md)
 
-![LexiLens v0.5.1](docs/images/main.png)
+![LexiLens v0.6.0](docs/images/main.png)
 
-## v0.5.1
+## v0.6.0
 
-- Fast subtitles: 150ms capture cadence, Windows OCR first, immediate submission on the first recognized frame. Accuracy mode retains the enhanced OCR workflow.
-- Up to four named capture areas with separate movable overlays, automatic initial placement near each crop, collision avoidance and saved positions.
-- In-memory dialogue replay for the last 100 completed pairs. New subtitles no longer cancel earlier captured dialogue; late replies cannot replace newer results.
-- Shared cache, up to two in-flight requests and a configurable API start interval (400ms by default in fast mode). HTTP 429 cooldown is still enforced.
-- Area-numbered diagnostic metadata; keys, screenshots and game text stay out of reports.
+- **In-game selection:** Ctrl+Alt+Q draws a temporary area and starts translation on release. The main window stays minimized; the previous foreground window is restored when possible. Escape cancels without replacing existing selections.
+- **Temporary or fixed:** Temporary areas follow text continuously by default, with an option for a single snapshot. Ctrl+Alt+A adds a fixed area; R replaces one and W selects a window. Fixed selection automatically starts continuous translation.
+- **Positioned translation:** OCR word/line coordinates are retained. Paragraphs are grouped by baseline, spacing and font size, with individual identities and translations.
+- **Three views:** Translucent in-place replacement, nearby paragraph cards, and the original combined floating overlay. Ctrl+Alt+V cycles views.
+- **Ownership and freshness:** Smaller overlapping fixed areas own their text centers. A temporary selection takes priority until cleared. Disappeared or stale text is removed; late obsolete replies go to replay without covering replacement text.
 
 ## Use
 
-1. Download the Windows x64 ZIP, extract everything and run `LexiLens.exe`. .NET and OCR models are included.
-2. Choose a service and test/save it. MyMemory needs no key; cloud providers use your own API key and credits.
-3. Select a window or drag a subtitle region, then try a single translation before starting continuous translation.
-4. Use **Add region** for separate quest/subtitle areas. **Fast subtitles** submits immediately; **Dialogue replay** keeps captured lines available after a cutscene.
-5. If translation stalls, inspect the five stage indicators and open Diagnostics.
+1. Extract the Windows x64 ZIP and run `LexiLens.exe`. .NET and OCR models are included. Configure and test your translation service.
+2. Return to the game. Press **Ctrl+Alt+Q**, drag a region, release and translate. **X** clears it; **M** opens the main window.
+3. Use **Ctrl+Alt+A** for a persistent region, **R** to replace it, or **W** to select a whole window. Each region can contain multiple automatically located paragraphs.
+4. Use **V** to change display, **T** to start/stop, **F** for a fixed-area one-shot, **H** to hide/show and **L** to unlock/click-through (all with Ctrl+Alt).
 
-Shortcuts use **Ctrl+Alt**: **W** select window, **R** replace region, **A** add region, **F** translate once, **T** start/stop, **H** hide/show overlay, **L** toggle click-through.
-
-Selection does not track later window moves or resizing. A window spanning multiple monitors is clipped to its largest visible monitor segment. Large selections cost more OCR time and API tokens.
+Temporary continuous follow can be disabled for snapshots. Fixed regions retain the previous four-area limit and survive app restarts. Selections do not track window moves or resizing. Exclusive fullscreen games may lose focus or pause during an external picker; desktop focus restoration is tested, individual games remain unverified.
 
 ## Recognition and providers
 
-Fast mode tries Windows OCR first and enhanced OCR on empty results. Disable fast mode for stylized fonts. English/Chinese enhanced recognition uses bundled CPU PaddleOCR v5; Windows OCR is also available and handles other installed languages. Stylized or obscured text can still be misread. Recognition inspection displays the crop and raw OCR without calling a translation API.
+Fast positioned mode uses Windows OCR and clears empty frames immediately; the combined view retains enhanced fallback on empty results. Disable fast mode for stylized fonts. English/Chinese enhanced recognition uses bundled CPU PaddleOCR v5; Windows OCR is also available and handles other installed languages. Stylized or obscured text can still be misread. Recognition inspection displays the crop and raw OCR without calling a translation API.
 
 25 cloud presets, a custom Chat Completions endpoint, MyMemory and Ollama are supported. See [provider setup](docs/AI_PLATFORMS.md). Presets are not shared keys or a promise of free API access. Ollama translation models are optional separate downloads; OCR models are included.
 
@@ -36,11 +33,11 @@ Screenshots stay on-device. Recognized text is sent to the chosen translation se
 
 ## Verification
 
-80 core tests pass. Desktop diagnostics cover actual capture, isolated OCR, live MyMemory translation, window snapping, click-through, deliberate worker stalls/cancellation, fallback and diagnostic export. Native inference is bounded by a 15-second initial / 8-second later timeout. Missing VC++ x64 runtimes can be addressed through the Microsoft link in Settings.
+90 core tests pass. Desktop diagnostics cover actual capture, isolated OCR, live MyMemory translation, window snapping, click-through, deliberate worker stalls/cancellation, fallback and diagnostic export. Native inference is bounded by a 15-second initial / 8-second later timeout. Missing VC++ x64 runtimes can be addressed through the Microsoft link in Settings.
 
 The v0.3.0 wait condition was reproduced: alternating OCR results produced zero API calls; the fix produced one. This identifies a code defect, not proof that every user's waiting screen has the same cause. See [bug analysis](docs/BUG_ANALYSIS.md), [project research](docs/RESEARCH.md) and [test records](docs/TESTING.md).
 
-Automatic semantic grouping inside a whole-window selection is not implemented; this release uses manually selected areas. Very brief unsampled frames can still be missed, and remote generation takes additional time. See [performance boundaries](docs/PERFORMANCE.md).
+Automatic grouping is geometric, not semantic classification. The default limit is 12 paragraphs per area (configurable from 4 to 24); dense layouts or stylized fonts can still be grouped incorrectly. Long translations may be clipped in small original bounds; replay retains full text. Very brief unsampled frames can still be missed, and remote generation takes additional time. See [performance boundaries](docs/PERFORMANCE.md).
 
 Per-game, HDR, mixed-DPI and long-running compatibility remain unverified. Provider protocols have mock tests; real keys have not been tested for every platform. Releases are unsigned.
 

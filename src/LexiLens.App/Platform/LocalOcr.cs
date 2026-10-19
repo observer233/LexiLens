@@ -8,7 +8,7 @@ using Sdcb.PaddleOCR.Models.Local;
 
 namespace LexiLens.App.Platform;
 
-internal sealed record Recognition(string Text, string Engine, double? Confidence, long Milliseconds)
+internal sealed record Recognition(string Text, string Engine, double? Confidence, long Milliseconds, IReadOnlyList<RecognizedBlock>? Blocks = null)
 {
     internal string Summary => $"{Engine} · {Milliseconds} ms" + (Confidence is { } score ? $" · 模型置信度 {score:P0}（非正确率）" : "");
 }
@@ -54,8 +54,9 @@ internal sealed class LocalOcr : IDisposable
         var regions = result.Regions.Where(x => x.Score >= .45 && !string.IsNullOrWhiteSpace(x.Text)).ToArray();
         var total = regions.Sum(x => x.Text.Length);
         var score = total == 0 ? 0 : regions.Sum(x => x.Score * x.Text.Length) / total;
-        var text = OcrLineLayout.Join(regions.Select(x => new OcrTextBox(x.Text, x.Rect.Center.X, x.Rect.Center.Y, x.Rect.Size.Height)));
-        return new Recognition(text, "PaddleOCR v5 · 本机 CPU", score, 0);
+        var boxes = regions.Select(x => new OcrTextBox(x.Text, x.Rect.Center.X, x.Rect.Center.Y, x.Rect.Size.Height, x.Rect.Size.Width)).ToArray();
+        var text = OcrLineLayout.Join(boxes);
+        return new Recognition(text, "PaddleOCR v5 · 本机 CPU", score, 0, ParagraphLayout.Group(boxes, image.Width, image.Height));
     }
 
     private static double Quality(Recognition r) => (r.Confidence ?? 0) * Math.Min(1, r.Text.Count(char.IsLetterOrDigit) / 8d);

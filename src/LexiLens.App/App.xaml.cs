@@ -18,11 +18,11 @@ public partial class App : Application
             MessageBox.Show(args.Exception.Message, "LexiLens · 遇到问题", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
-        var diagnostic = e.Args.Length == 2 && e.Args[0] is "--diagnostics" or "--diagnostics-ui";
+        var diagnostic = e.Args.Length == 2 && e.Args[0] is "--diagnostics" or "--diagnostics-ui" or "--diagnostics-spatial";
         var window = new MainWindow(diagnostic ? Path.Combine(Path.GetFullPath(e.Args[1]), "profile") : null);
         MainWindow = window;
         if (diagnostic)
-            window.Loaded += async (_, _) => { if (e.Args[0] == "--diagnostics-ui") await Diagnostics.RunUiAsync(window, Path.GetFullPath(e.Args[1])); else await Diagnostics.RunAsync(window, Path.GetFullPath(e.Args[1])); };
+            window.Loaded += async (_, _) => { if (e.Args[0] == "--diagnostics-ui") await Diagnostics.RunUiAsync(window, Path.GetFullPath(e.Args[1])); else if (e.Args[0] == "--diagnostics-spatial") await Diagnostics.RunSpatialAsync(window, Path.GetFullPath(e.Args[1])); else await Diagnostics.RunAsync(window, Path.GetFullPath(e.Args[1])); };
         window.Show();
     }
 }

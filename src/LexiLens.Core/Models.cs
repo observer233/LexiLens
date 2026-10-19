@@ -3,6 +3,7 @@ namespace LexiLens.Core;
 public enum TranslationProvider { MyMemory, Ollama, Cloud }
 public enum OcrMode { Enhanced, Windows }
 public enum OcrImageMode { Auto, Original, LightOnDark, LowContrast }
+public enum OverlayMode { InPlace, Nearby, Combined }
 
 public sealed record CloudProfile
 {
@@ -45,6 +46,9 @@ public sealed record AppSettings
     public double OverlayOpacity { get; init; } = 0.92;
     public double FontSize { get; init; } = 21;
     public bool ShowOriginal { get; init; } = true;
+    public OverlayMode OverlayMode { get; init; } = OverlayMode.InPlace;
+    public bool QuickFollow { get; init; } = true;
+    public int AutoBlockLimit { get; init; } = 12;
     public CaptureRegion? Region { get; init; }
     public List<CaptureArea> Areas { get; init; } = [];
 
@@ -56,6 +60,8 @@ public sealed record AppSettings
         ScanIntervalMs = Math.Clamp(ScanIntervalMs, 100, 5000),
         FastIntervalMs = Math.Clamp(FastIntervalMs, 100, 1000),
         RequestIntervalMs = Math.Clamp(RequestIntervalMs, 200, 5000),
+        AutoBlockLimit = Math.Clamp(AutoBlockLimit, 4, 24),
+        OverlayMode = Enum.IsDefined(OverlayMode) ? OverlayMode : OverlayMode.InPlace,
         Areas = CaptureAreas().Where(x => x != null && x.Region?.IsValid == true && !string.IsNullOrWhiteSpace(x.Id))
             .DistinctBy(x => x.Id).Take(MaxAreas).Select((x, i) => x with
             {

@@ -7,7 +7,7 @@ using System.Threading.Channels;
 
 namespace LexiLens.App.Platform;
 
-internal sealed class ScreenTextSource : ITextSource, IDisposable
+internal sealed class ScreenTextSource : IBlockTextSource, IDisposable
 {
     private readonly CaptureRegion _region;
     private readonly OcrEngine? _engine;
@@ -29,6 +29,9 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
     internal (byte[] Bytes, int Width, int Height)? LastFrame { get; private set; }
     internal Action<string>? Status { get; set; }
     internal Action<PipelineEvent>? Progress { get; set; }
+    internal Func<bool>? Paused { get; set; }
+    internal Func<RecognizedBlock, bool>? IncludeBlock { get; set; }
+    internal bool ImmediateEmpty { get; set; }
     private readonly string? _expectedDiagnosticText;
 
     internal ScreenTextSource(CaptureRegion region, string language, string? expectedDiagnosticText = null,
@@ -52,6 +55,7 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
     public Task<string> ReadAsync(CancellationToken cancellationToken) => Task.Run(async () =>
     {
         cancellationToken.ThrowIfCancellationRequested();
+        while (Paused?.Invoke() == true) await Task.Delay(50, cancellationToken);
         var frame = Interlocked.Increment(ref _frame);
         var watch = System.Diagnostics.Stopwatch.StartNew();
         var captured = _fastMode ? await ReadBufferedFrameAsync(cancellationToken) : CaptureFrame();
@@ -63,7 +67,7 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
             Progress?.Invoke(new(PipelineStage.Ocr, _lastText.Length == 0 ? PipelineState.Warning : PipelineState.Skipped, "OCR_FRAME_CACHE", _lastText.Length == 0 ? "画面未变化，上次未识别到文字" : "画面未变化，复用识别结果", Characters: _lastText.Length, Frame: frame));
             return _lastText;
         }
-        Progress?.Invoke(new(PipelineStage.Ocr, PipelineState.Running, "OCR_START", _local != null && !_localFailed ? "增强识别中，首次加载最多等待 15 秒" : "Windows OCR 识别中", Frame: frame));
+        Progress?.Invoke(new(PipelineStage.Ocr, PipelineState.Running, "OCR_START", _fastMode && _engine != null ? "Windows OCR 快速识别中" : _local != null && !_localFailed ? "增强识别中，首次加载最多等待 15 秒" : "Windows OCR 识别中", Frame: frame));
         string text;
         // Windows OCR usually returns small subtitle crops much sooner. Enhanced
         // inference remains the fallback; accuracy mode keeps the original order.
@@ -73,9 +77,9 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
             var clock = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                var quick = await RecognizeBytesAsync(_engine, bytes, w, h, cancellationToken);
-                if (!string.IsNullOrWhiteSpace(quick))
-                { LastRecognition = new Recognition(quick, "Windows OCR · 快速字幕", null, clock.ElapsedMilliseconds); usedFastWindows = true; }
+                var quick = await RecognizeDetailedAsync(_engine, bytes, w, h, cancellationToken);
+                if (!string.IsNullOrWhiteSpace(quick.Text) || ImmediateEmpty)
+                { LastRecognition = quick with { Engine = "Windows OCR · 快速字幕", Milliseconds = clock.ElapsedMilliseconds }; usedFastWindows = true; }
             }
             catch (Exception ex) when (ex is not OperationCanceledException && _local != null) { }
         }
@@ -86,11 +90,11 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
                 LastRecognition = await _local.ReadAsync(bytes, w, h, _imageMode, cancellationToken, _fastMode);
                 if (string.IsNullOrWhiteSpace(LastRecognition.Text) && _engine != null)
                 {
-                    var alternative = await RecognizeBytesAsync(_engine, bytes, w, h, cancellationToken);
-                    if (!string.IsNullOrWhiteSpace(alternative))
+                    var alternative = await RecognizeDetailedAsync(_engine, bytes, w, h, cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(alternative.Text))
                     {
-                        LastRecognition = new Recognition(alternative, "Windows OCR · 增强结果为空", null, watch.ElapsedMilliseconds);
-                        Progress?.Invoke(new(PipelineStage.Ocr, PipelineState.Warning, "OCR_EMPTY_FALLBACK", "增强结果为空，Windows OCR 已识别到文字", Characters: alternative.Length, Frame: frame));
+                        LastRecognition = alternative with { Engine = "Windows OCR · 增强结果为空", Milliseconds = watch.ElapsedMilliseconds };
+                        Progress?.Invoke(new(PipelineStage.Ocr, PipelineState.Warning, "OCR_EMPTY_FALLBACK", "增强结果为空，Windows OCR 已识别到文字", Characters: alternative.Text.Length, Frame: frame));
                     }
                 }
             }
@@ -106,17 +110,24 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
         if (!usedFastWindows && (_local == null || _localFailed))
         {
             var clock = System.Diagnostics.Stopwatch.StartNew();
-            text = await RecognizeBytesAsync(_engine!, bytes, w, h, cancellationToken);
-            LastRecognition = new Recognition(text, "Windows OCR" + (_localFailed ? " · " + _fallbackReason : _mode == OcrMode.Enhanced ? " · 当前语言" : ""), null, clock.ElapsedMilliseconds);
+            LastRecognition = await RecognizeDetailedAsync(_engine!, bytes, w, h, cancellationToken);
+            LastRecognition = LastRecognition with { Engine = "Windows OCR" + (_localFailed ? " · " + _fallbackReason : _mode == OcrMode.Enhanced ? " · 当前语言" : ""), Milliseconds = clock.ElapsedMilliseconds };
         }
         text = LastRecognition!.Text;
         Progress?.Invoke(new(PipelineStage.Ocr, text.Length == 0 ? PipelineState.Warning : PipelineState.Success, text.Length == 0 ? "OCR_EMPTY" : "OCR_OK", text.Length == 0 ? "未识别到文字" : LastRecognition.Engine + $" · {text.Length} 字符", LastRecognition.Milliseconds, text.Length, frame));
         Status?.Invoke(LastRecognition.Summary);
-        if (_expectedDiagnosticText != null && TextProcessing.Normalize(text) != TextProcessing.Normalize(_expectedDiagnosticText))
+        if (_expectedDiagnosticText != null && !string.IsNullOrWhiteSpace(text) && TextProcessing.Normalize(text) != TextProcessing.Normalize(_expectedDiagnosticText))
             throw new InvalidOperationException("诊断练习文字被遮挡或识别不符，已停止，未将该内容发送翻译服务。");
         _lastBytes = bytes; _lastText = text;
         return text;
     }, cancellationToken);
+
+    public async Task<IReadOnlyList<RecognizedBlock>> ReadBlocksAsync(CancellationToken ct)
+    {
+        var text = await ReadAsync(ct);
+        var blocks = LastRecognition?.Blocks ?? (string.IsNullOrWhiteSpace(text) ? [] : [new(text, new(0, 0, 1, 1))]);
+        return IncludeBlock == null ? blocks : blocks.Where(IncludeBlock).ToArray();
+    }
 
     private (byte[] Bytes, int Width, int Height) CaptureFrame()
     {
@@ -146,6 +157,7 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
                 {
                     while (!token.IsCancellationRequested)
                     {
+                        while (Paused?.Invoke() == true) await Task.Delay(50, token);
                         var clock = System.Diagnostics.Stopwatch.StartNew();
                         writer.TryWrite(CaptureFrame());
                         await Task.Delay(Math.Max(1, _captureInterval - (int)clock.ElapsedMilliseconds), token);
@@ -160,12 +172,21 @@ internal sealed class ScreenTextSource : ITextSource, IDisposable
     }
 
     internal static async Task<string> RecognizeBytesAsync(OcrEngine engine, byte[] bytes, int width, int height, CancellationToken ct)
+        => (await RecognizeDetailedAsync(engine, bytes, width, height, ct)).Text;
+
+    internal static async Task<Recognition> RecognizeDetailedAsync(OcrEngine engine, byte[] bytes, int width, int height, CancellationToken ct, Action<IReadOnlyList<OcrTextBox>>? inspect = null)
     {
         using var writer = new DataWriter();
         writer.WriteBytes(bytes);
         using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(writer.DetachBuffer(), BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Ignore);
         var result = await engine.RecognizeAsync(bitmap).AsTask(ct);
-        return string.Join("\n", result.Lines.Select(line => line.Text));
+        var boxes = result.Lines.SelectMany(line => line.Words).Select(word =>
+        {
+            var rect = word.BoundingRect;
+            return new OcrTextBox(word.Text, rect.X + rect.Width / 2, rect.Y + rect.Height / 2, rect.Height, rect.Width);
+        }).ToArray();
+        inspect?.Invoke(boxes);
+        return new(string.Join("\n", result.Lines.Select(line => line.Text)), "Windows OCR", null, 0, ParagraphLayout.Group(boxes, width, height));
     }
     public void Dispose()
     {

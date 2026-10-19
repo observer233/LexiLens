@@ -1,6 +1,6 @@
 namespace LexiLens.Core;
 
-public sealed record OcrTextBox(string Text, double CenterX, double CenterY, double Height);
+public sealed record OcrTextBox(string Text, double CenterX, double CenterY, double Height, double Width = 0);
 
 public static class OcrLineLayout
 {

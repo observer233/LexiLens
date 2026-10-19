@@ -23,6 +23,10 @@ internal sealed class Hotkeys : IDisposable
         Register(5, 0x57, "Ctrl+Alt+W");
         Register(6, 0x46, "Ctrl+Alt+F");
         Register(7, 0x41, "Ctrl+Alt+A");
+        Register(8, 0x51, "Ctrl+Alt+Q");
+        Register(9, 0x58, "Ctrl+Alt+X");
+        Register(10, 0x4D, "Ctrl+Alt+M");
+        Register(11, 0x56, "Ctrl+Alt+V");
     }
 
     private void Register(int id, uint key, string label)
