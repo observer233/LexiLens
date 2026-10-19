@@ -31,8 +31,18 @@
         </StackPanel>
         <StackPanel x:Name="CloudPanel" Visibility="Collapsed" Margin="0,18,0,0">
           <TextBlock Text="2  选择平台" Foreground="{StaticResource Accent}" FontSize="13"/>
-          <CheckBox x:Name="ShowAllCheck" Content="也显示赠送额度、付费及自定义平台" Checked="FilterChanged" Unchecked="FilterChanged"/>
+          <WrapPanel x:Name="QuickServices" Margin="0,12,0,0">
+            <Button Content="DeepSeek" Tag="deepseek" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+            <Button Content="豆包" Tag="doubao" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+            <Button Content="通义千问" Tag="dashscope" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+            <Button Content="ChatGPT / OpenAI" Tag="openai" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+            <Button Content="Claude" Tag="anthropic" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+            <Button Content="Gemini" Tag="gemini" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+            <Button Content="Grok" Tag="xai" Click="QuickService" Margin="0,0,7,7" Padding="10,7"/>
+          </WrapPanel>
+          <CheckBox x:Name="ShowAllCheck" Content="显示全部平台（包含自备额度平台）" Checked="FilterChanged" Unchecked="FilterChanged"/>
           <ComboBox x:Name="ServiceCombo" DisplayMemberPath="DisplayName" SelectionChanged="ServiceChanged"/>
+          <StackPanel x:Name="EndpointPanel" Margin="0,12,0,0" Visibility="Collapsed"><TextBlock Text="服务地区（必须与 API Key 一致）" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,0,0,7"/><ComboBox x:Name="EndpointCombo" DisplayMemberPath="Name" SelectionChanged="EndpointChanged"/></StackPanel>
           <TextBlock x:Name="PolicyText" Foreground="{StaticResource Accent}" FontSize="12" LineHeight="20" Margin="0,12,0,0"/>
           <TextBlock Text="免费政策核对：2026-10-20。软件无法读取你的余额，也无法阻止已启用计费的账号在平台扣费；请在平台设置免费额度用完即停。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="18" Margin="0,7,0,12"/>
           <WrapPanel><Button Content="获取密钥 · 官方页面 ↗" Click="OpenKeyPage" Margin="0,0,8,0"/><Button Content="查看平台说明 ↗" Click="OpenDocs"/></WrapPanel>

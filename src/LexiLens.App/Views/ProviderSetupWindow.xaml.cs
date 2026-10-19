@@ -40,7 +40,7 @@ public partial class ProviderSetupWindow : Window
         LocalEndpointInput.Text = settings.OllamaEndpoint;
         LocalModelCombo.ItemsSource = new[] { settings.OllamaModel, "qwen2.5:3b", "qwen2.5:7b" }.Distinct().ToList();
         LocalModelCombo.Text = settings.OllamaModel;
-        ShowAllCheck.IsChecked = ProviderCatalog.Get(settings.CloudServiceId).Access != AccessCategory.FreeTier;
+        ShowAllCheck.IsChecked = true;
         RefreshServices(settings.CloudServiceId);
         ModeCombo.SelectedIndex = (int)settings.Provider;
         _loading = false;
@@ -73,6 +73,18 @@ public partial class ProviderSetupWindow : Window
         if (_loading || CloudModelCombo == null) return;
         CaptureDraft(); PopulateService();
     }
+    private void QuickService(object sender, RoutedEventArgs e)
+    {
+        if (_busy || sender is not Button { Tag: string id }) return;
+        ShowAllCheck.IsChecked = true;
+        ServiceCombo.SelectedItem = ProviderCatalog.Get(id);
+    }
+    private void EndpointChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || _preset == null || EndpointCombo.SelectedItem is not ServiceEndpoint endpoint) return;
+        CloudEndpointInput.Text = endpoint.Url == _preset.Endpoint ? "" : endpoint.Url;
+        ScopeChanged(this, new RoutedEventArgs());
+    }
     private void PopulateService()
     {
         _loading = true;
@@ -84,9 +96,12 @@ public partial class ProviderSetupWindow : Window
         AccountPanel.Visibility = _preset.NeedsAccountId ? Visibility.Visible : Visibility.Collapsed;
         AccountInput.Text = profile.AccountId;
         CloudEndpointInput.Text = profile.Endpoint;
+        EndpointPanel.Visibility = _preset.Endpoints.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        EndpointCombo.ItemsSource = _preset.Endpoints;
+        EndpointCombo.SelectedItem = _preset.Endpoints.FirstOrDefault(x => x.Url == (profile.Endpoint.Length == 0 ? _preset.Endpoint : profile.Endpoint));
         DefaultEndpointLabel.Text = "预设：" + (_preset.Endpoint.Length == 0 ? "请填本机或可信服务的 API 根地址" : _preset.Endpoint);
         CloudModelCombo.ItemsSource = _preset.Models;
-        CloudModelCombo.Text = profile.Model;
+        CloudModelCombo.Text = string.IsNullOrWhiteSpace(profile.Model) ? _preset.DefaultProfile.Model : profile.Model;
         CreditCheck.IsChecked = profile.CreditUseAcknowledged;
         _loadedScope = null; KeyInput.Password = "";
         _loading = false;
@@ -119,6 +134,9 @@ public partial class ProviderSetupWindow : Window
     private void ScopeChanged(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
+        _loading = true;
+        EndpointCombo.SelectedItem = _preset?.Endpoints.FirstOrDefault(x => x.Url == (CloudEndpointInput.Text.Trim().Length == 0 ? _preset.Endpoint : CloudEndpointInput.Text.Trim()));
+        _loading = false;
         CreditCheck.IsChecked = false; LoadScopedKey(); UpdateModelNotice();
     }
     private void ModelChanged(object sender, SelectionChangedEventArgs e)
@@ -192,6 +210,7 @@ public partial class ProviderSetupWindow : Window
         ModeCombo.IsEnabled = !busy; ServiceCombo.IsEnabled = !busy; ShowAllCheck.IsEnabled = !busy;
         CloudModelCombo.IsEnabled = !busy; CloudEndpointInput.IsEnabled = !busy; KeyInput.IsEnabled = !busy;
         AccountInput.IsEnabled = !busy; CreditCheck.IsEnabled = !busy;
+        EndpointCombo.IsEnabled = !busy; QuickServices.IsEnabled = !busy;
         TestButton.IsEnabled = !busy; UseButton.IsEnabled = !busy; FetchModelsButton.IsEnabled = !busy;
         LocalListButton.IsEnabled = !busy; PullButton.IsEnabled = !busy;
         LocalModelCombo.IsEnabled = !busy; LocalEndpointInput.IsEnabled = !busy;
@@ -285,7 +304,17 @@ public partial class ProviderSetupWindow : Window
     internal async Task<bool> VerifyForDiagnosticsAsync()
     {
         ModeCombo.SelectedIndex = 2;
-        ShowAllCheck.IsChecked = true;
+        if (ServiceCombo.Items.Count != ProviderCatalog.All.Count) return false;
+        QuickService(new Button { Tag = "deepseek" }, new RoutedEventArgs());
+        if (_preset?.Id != "deepseek" || string.IsNullOrWhiteSpace(CloudModelCombo.Text)) return false;
+        QuickService(new Button { Tag = "doubao" }, new RoutedEventArgs());
+        if (_preset?.Id != "doubao" || string.IsNullOrWhiteSpace(CloudModelCombo.Text)) return false;
+        QuickService(new Button { Tag = "dashscope" }, new RoutedEventArgs());
+        KeyInput.Password = "regional-diagnostic-key";
+        EndpointCombo.SelectedIndex = 1;
+        if (KeyInput.Password.Length != 0 || !CloudEndpointInput.Text.Contains("dashscope-intl", StringComparison.Ordinal)) return false;
+        EndpointCombo.SelectedIndex = 0;
+        if (KeyInput.Password != "regional-diagnostic-key") return false;
         foreach (var preset in ProviderCatalog.All)
         {
             ServiceCombo.SelectedItem = preset;

@@ -33,7 +33,6 @@ public class CloudTests
     [InlineData("minimax")]
     [InlineData("stepfun")]
     [InlineData("deepseek")]
-    [InlineData("openai")]
     [InlineData("sambanova")]
     [InlineData("together")]
     [InlineData("nvidia")]
@@ -54,6 +53,8 @@ public class CloudTests
             Assert.False(body.RootElement.GetProperty("stream").GetBoolean());
             if (id == "zhipu") Assert.Equal("disabled", body.RootElement.GetProperty("thinking").GetProperty("type").GetString());
             if (id == "openrouter") Assert.Equal(0, body.RootElement.GetProperty("provider").GetProperty("max_price").GetProperty("prompt").GetInt32());
+            if (id is "deepseek" or "doubao" or "minimax") Assert.Equal("disabled", body.RootElement.GetProperty("thinking").GetProperty("type").GetString());
+            if (id == "dashscope") Assert.False(body.RootElement.GetProperty("enable_thinking").GetBoolean());
             return TranslationTests.Json(ChatReply);
         }));
         var client = new TranslationClient(http, settings, "dummy-not-a-real-key");
@@ -188,8 +189,8 @@ public class CloudTests
     [Fact]
     public void AllCatalogEntriesHaveDistinctIdsAndValidEndpointsAndLinks()
     {
-        Assert.Equal(25, ProviderCatalog.All.Count);
-        Assert.Equal(25, ProviderCatalog.All.Select(x => x.Id).Distinct().Count());
+        Assert.Equal(26, ProviderCatalog.All.Count);
+        Assert.Equal(26, ProviderCatalog.All.Select(x => x.Id).Distinct().Count());
         foreach (var preset in ProviderCatalog.All)
         {
             Assert.Equal("https", new Uri(preset.DocsUrl).Scheme);
@@ -207,6 +208,8 @@ public class CloudTests
     [InlineData("https://user:secret@example.com/v1")]
     [InlineData("http://example.com/v1")]
     [InlineData("https://example.com/v1/chat/completions")]
+    [InlineData("https://example.com/v1/responses")]
+    [InlineData("https://example.com/v1/messages")]
     [InlineData("file:///C:/secret")]
     public void CustomEndpointsRejectCredentialsInUrlAndInsecureRemote(string endpoint) =>
         Assert.Throws<ArgumentException>(() => ProviderCatalog.Endpoint(ProviderCatalog.Get("custom"), new CloudProfile { Endpoint = endpoint }));
@@ -224,6 +227,58 @@ public class CloudTests
         await Assert.ThrowsAsync<CloudApiException>(() => client.TranslateAsync("same text", CancellationToken.None));
         Assert.Equal("找到古代遗物。", await client.TranslateAsync("same text", CancellationToken.None));
         Assert.Equal(2, count);
+    }
+
+    [Theory]
+    [InlineData("openai", "gpt-4.1-mini", null)]
+    [InlineData("xai", "grok-4.3", "none")]
+    [InlineData("xai", "grok-4.7", "low")]
+    public async Task ResponsesUsesStatelessInputAndReturnsOnlyOutputText(string id, string model, string? effort)
+    {
+        using var http = new HttpClient(new Handler(async (request, _) =>
+        {
+            Assert.EndsWith("/responses", request.RequestUri!.AbsolutePath);
+            Assert.Equal("dummy", request.Headers.Authorization?.Parameter);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            var root = body.RootElement;
+            Assert.False(root.GetProperty("store").GetBoolean());
+            Assert.Equal("Find it.", root.GetProperty("input")[1].GetProperty("content").GetString());
+            Assert.Equal(2048, root.GetProperty("max_output_tokens").GetInt32());
+            if (effort != null) Assert.Equal(effort, root.GetProperty("reasoning").GetProperty("effort").GetString());
+            return TranslationTests.Json("""{"status":"completed","output":[{"type":"reasoning","summary":[{"text":"hidden"}]},{"type":"message","content":[{"type":"output_text","text":"找到遗物。"}]}],"usage":{"total_tokens":40}}""");
+        }));
+        var client = new CloudTranslation(http, Settings(id, model, consent: true), "dummy");
+        Assert.Equal("找到遗物。", await client.TranslateAsync("Find it.", CancellationToken.None));
+        Assert.Equal(40, client.ReportedTokens);
+    }
+
+    [Theory]
+    [InlineData("incomplete")]
+    [InlineData("failed")]
+    public async Task IncompleteResponsesNeverReturnPartialTranslations(string status)
+    {
+        using var http = new HttpClient(new Handler((_, _) => Task.FromResult(TranslationTests.Json(
+            "{\"status\":\"" + status + "\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"half\"}]}]}"))));
+        await Assert.ThrowsAsync<CloudApiException>(() => new CloudTranslation(http, Settings("openai", consent: true), "dummy").TranslateAsync("Find it.", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task RegionalEndpointsKeepTheirOwnKeysWithASharedHttpClient()
+    {
+        var endpoints = ProviderCatalog.Get("dashscope").Endpoints;
+        var index = 0;
+        using var http = new HttpClient(new Handler((request, _) =>
+        {
+            Assert.Equal(new Uri(endpoints[index].Url).Host, request.RequestUri!.Host);
+            Assert.Equal("key-" + index, request.Headers.Authorization?.Parameter);
+            return Task.FromResult(TranslationTests.Json(ChatReply));
+        }));
+        for (; index < endpoints.Count; index++)
+        {
+            var settings = Settings("dashscope", consent: true, endpoint: endpoints[index].Url);
+            Assert.Equal("找到古代遗物。", await new CloudTranslation(http, settings, "key-" + index).TranslateAsync("Find it.", CancellationToken.None));
+        }
+        Assert.Null(http.DefaultRequestHeaders.Authorization);
     }
 
     private sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler

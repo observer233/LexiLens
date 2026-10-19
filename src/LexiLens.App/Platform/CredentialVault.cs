@@ -49,7 +49,14 @@ internal sealed class CredentialVault(string directory)
         finally { CryptographicOperations.ZeroMemory(plain); }
     }
 
-    internal static string Scope(string providerId, Uri endpoint) => providerId + "|" + endpoint.AbsoluteUri;
+    internal static string Scope(string providerId, Uri endpoint)
+    {
+        // v0.2 used /v1 for the same official DeepSeek service. Preserve that
+        // existing credential slot after switching to its documented base URL.
+        var address = providerId == "deepseek" && endpoint.AbsoluteUri == "https://api.deepseek.com/"
+            ? "https://api.deepseek.com/v1/" : endpoint.AbsoluteUri;
+        return providerId + "|" + address;
+    }
 
     private static byte[] Transform(byte[] data, bool protect)
     {

@@ -40,6 +40,8 @@ public partial class MainWindow : Window
         _words = _store.Load("vocabulary.json", new List<VocabularyEntry>());
         _translator = CreateTranslator();
         var languages = ScreenTextSource.Languages().Select(x => new LanguageOption(x.Tag, x.Name)).ToList();
+        if (!languages.Any(x => x.Tag == "en-US")) languages.Add(new LanguageOption("en-US", "English · en-US（增强识别已内置）"));
+        if (!languages.Any(x => x.Tag.StartsWith("zh", StringComparison.OrdinalIgnoreCase))) languages.Add(new LanguageOption("zh-Hans-CN", "简体中文 · zh-Hans-CN（增强识别已内置）"));
         LanguageCombo.ItemsSource = languages;
         LanguageCombo.SelectedValue = _settings.SourceLanguage;
         // Keep the intended language explicit if its OCR package has not been installed.
@@ -50,6 +52,7 @@ public partial class MainWindow : Window
         }
         IntervalInput.Text = _settings.ScanIntervalMs.ToString(); OriginalCheck.IsChecked = _settings.ShowOriginal;
         FontSlider.Value = _settings.FontSize; OpacitySlider.Value = _settings.OverlayOpacity;
+        OcrModeCombo.SelectedIndex = (int)_settings.OcrMode; OcrImageCombo.SelectedIndex = (int)_settings.OcrImageMode;
         DataLocation.Text = "设置与生词仅保存在本机：" + _store.DirectoryPath;
         RefreshSummary(); RefreshWords();
         SourceInitialized += (_, _) =>
@@ -123,7 +126,7 @@ public partial class MainWindow : Window
             }
             if (!NativeMethods.IsOnDesktop(_settings.Region)) throw new InvalidOperationException("保存的区域不在当前屏幕内，请重新框选。");
             if (_settings.Provider == TranslationProvider.Cloud) _translator.Cloud.Validate(true);
-            var textSource = new ScreenTextSource(_settings.Region, _settings.SourceLanguage, _expectedDiagnosticText);
+            var textSource = new ScreenTextSource(_settings.Region, _settings.SourceLanguage, _expectedDiagnosticText, _settings.OcrMode, _settings.OcrImageMode);
             EnsureOverlay(); _overlay!.Show(); _overlay.SetLocked(true);
             _source = ""; _translation = ""; _preview = false;
             _overlay.SetContent("", "等待识别游戏文字…", "正在识别");
@@ -132,6 +135,7 @@ public partial class MainWindow : Window
             var cancellation = new CancellationTokenSource();
             _sessionCancellation = cancellation;
             var generation = ++_generation;
+            textSource.Status = status => Dispatcher.BeginInvoke(() => { if (generation == _generation) RecognitionStatus.Text = status; });
             var session = new LiveSession(textSource, _translator, _settings.ScanIntervalMs);
             session.Updated += update => Dispatcher.BeginInvoke(() =>
             {
@@ -139,13 +143,14 @@ public partial class MainWindow : Window
             });
             StateLabel.Text = "●  正在翻译"; StartButton.Content = "暂停翻译  Ⅱ";
             MessageLabel.Text = "悬浮窗已锁定穿透。Ctrl+Alt+L 解锁查词；Ctrl+Alt+T 暂停。";
-            _sessionTask = ObserveSessionAsync(session, cancellation, generation);
+            RecognitionStatus.Text = "正在加载本地识别引擎…";
+            _sessionTask = ObserveSessionAsync(session, textSource, cancellation, generation);
         }
         catch (Exception ex) { MessageLabel.Text = LiveSession.FriendlyError(ex); }
         finally { _transition = false; }
     }
 
-    private async Task ObserveSessionAsync(LiveSession session, CancellationTokenSource cancellation, int generation)
+    private async Task ObserveSessionAsync(LiveSession session, ScreenTextSource source, CancellationTokenSource cancellation, int generation)
     {
         try { await session.RunAsync(cancellation.Token); }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
@@ -160,6 +165,7 @@ public partial class MainWindow : Window
                 cancellation.Dispose();
             }
         }
+        finally { source.Dispose(); }
     }
 
     private async Task StopAsync()
@@ -217,6 +223,25 @@ public partial class MainWindow : Window
 
     private async void ToggleTranslation(object sender, RoutedEventArgs e) => await ToggleAsync();
     private async void PickRegion(object sender, RoutedEventArgs e) => await SelectRegionAsync();
+    private async void PreviewRecognition(object sender, RoutedEventArgs e)
+    {
+        if (_transition) return;
+        _transition = true;
+        try
+        {
+            await StopAsync();
+            if (_settings.Region == null) throw new InvalidOperationException("请先框选游戏中的字幕或任务文字区域。");
+            MessageLabel.Text = "正在本机识别选区，首次加载模型可能需要几秒…";
+            using var source = new ScreenTextSource(_settings.Region, _settings.SourceLanguage, mode: _settings.OcrMode, imageMode: _settings.OcrImageMode);
+            var text = await source.ReadAsync(CancellationToken.None);
+            var frame = source.LastFrame!.Value;
+            new RecognitionPreviewWindow(frame.Bytes, frame.Width, frame.Height, text, source.LastRecognition!.Summary) { Owner = this }.Show();
+            RecognitionStatus.Text = source.LastRecognition.Summary;
+            MessageLabel.Text = "识别检查完成，没有请求翻译服务。可在偏好设置更换图像方式后再检查。";
+        }
+        catch (Exception ex) { MessageLabel.Text = LiveSession.FriendlyError(ex); }
+        finally { _transition = false; }
+    }
     private void PreviewOverlay(object sender, RoutedEventArgs e)
     {
         EnsureOverlay(); _overlay!.Show();
@@ -277,6 +302,7 @@ public partial class MainWindow : Window
             {
                 SourceLanguage = LanguageCombo.SelectedValue as string ?? "en-US",
                 ScanIntervalMs = interval, OverlayOpacity = OpacitySlider.Value, FontSize = FontSlider.Value,
+                OcrMode = (OcrMode)OcrModeCombo.SelectedIndex, OcrImageMode = (OcrImageMode)OcrImageCombo.SelectedIndex,
                 ShowOriginal = OriginalCheck.IsChecked == true
             }).Sanitize();
             await StopAsync();
@@ -346,6 +372,7 @@ public partial class MainWindow : Window
     private void ShowWords(object sender, RoutedEventArgs e) => ShowPage(WordsPage, null, WordsNav);
     private void ShowSettings(object sender, RoutedEventArgs e) => ShowPage(null, SettingsPage, SettingsNav);
     private void OpenPractice(object sender, RoutedEventArgs e) => new PracticeWindow().Show();
+    private void OpenOcrRuntimeHelp(object sender, RoutedEventArgs e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist") { UseShellExecute = true });
 
     private async void OnClosing(object? sender, CancelEventArgs e)
     {

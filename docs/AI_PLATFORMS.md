@@ -1,6 +1,6 @@
 # AI 平台接入与免费政策
 
-核对日期：**2026-10-20**。v0.2.0 内置 **24 个云平台预设**，另有自定义兼容服务、Ollama 与无需密钥的 MyMemory。
+核对日期：**2026-10-20**。v0.3.0 内置 **25 个云平台预设**，另有自定义兼容服务、Ollama 与无需密钥的 MyMemory。
 
 这些是接入配置，不是公共 API Key，也不代表每个平台都提供永久免费 API。用户自己的 API Key 在本机填写，按 Windows 当前账号加密保存。软件不代替平台注册、实名、开通模型或领取额度。
 
@@ -12,9 +12,25 @@
 4. 选择内置候选模型，或点击「读取账号模型列表」。读取到模型不等于免费或已有调用权限。
 5. 点击「仅测试连接」查看译文和耗时，或「测试并使用」保存生效。
 
-默认先显示有免费档的候选平台。勾选「也显示赠送额度、付费及自定义平台」可使用其他账号额度。试用/付费平台、手动添加的模型和修改后的地址需要确认额度后才能发送翻译请求。
+默认显示全部平台，并提供 DeepSeek、豆包、通义千问、ChatGPT/OpenAI、Claude、Gemini、Grok 快捷按钮。取消「显示全部平台」才只看免费档候选。试用/付费平台、手动添加的模型和修改后的地址需要确认额度后才能发送翻译请求。
 
-## 先显示的免费档候选
+## 常用平台直接配置
+
+选择平台后，软件自动填写官方接口和候选模型，通常只需粘贴 Key → 确认额度 → 测试并使用。模型列表可读取，也可手动输入账号实际开通的 ID。
+
+| 平台 | 默认候选 | 接入方式及注意点 |
+| --- | --- | --- |
+| DeepSeek | `deepseek-flash`；可选 `deepseek-v4-pro` | 官方 Chat Completions，关闭思考；免费网页聊天不代表 API 余额。保留 v0.2 官方地址对应的已存密钥 |
+| 火山方舟 / 豆包 | `doubao-seed-2-1-lite-260915`；可选 pro/turbo | 方舟 Chat API；需先开通模型，也可输入 `ep-...` 推理接入点。已知 Seed 2 候选关闭思考，自填接入点采用服务端默认参数 |
+| 通义千问 / 百炼 | `qwen-flash`；可选 `qwen-plus` | 先选择 Key 对应的北京、新加坡、美国弗吉尼亚或香港地区；不同地区密钥分别保存。工作空间专属根地址填高级地址 |
+| ChatGPT / OpenAI API | `gpt-4.1-mini` | 原生 Responses API，`store: false`；使用标准 API Key 和 API 额度。仅支持 Chat Completions 的第三方代理应选择「其他兼容平台」 |
+| Anthropic Claude | `claude-haiku-5-5` | 原生 Messages API，Haiku 5.5 使用低 effort；网页订阅不直接通用，附赠 API 积分按控制台条件使用 |
+| xAI / Grok | `grok-4.3`；可选 `grok-4.7` | 原生 Responses API，`store: false`；4.3 关闭思考，4.7 使用 low。需要 API 余额，网页订阅不直接通用 |
+| MiniMax | `MiniMax-M3`；可选 `MiniMax-M3.1-Flash` | 选择国内/国际地区与对应 Key；M3 关闭思考，Flash 使用 low 并分离思考输出 |
+
+接口与参数依据：[DeepSeek](https://api-docs.deepseek.com/api/create-chat-completion/)、[豆包模型与思考参数](https://docs.volcengine.com/docs/ark/deep-thinking)、[百炼地区地址](https://help.aliyun.com/en/model-studio/base-url)、[Qwen Flash](https://help.aliyun.com/en/model-studio/qwen-flash)、[OpenAI Responses](https://developers.openai.com/api/reference/resources/responses/methods/create)、[Claude Haiku 5.5](https://platform.claude.com/docs/en/models/haiku-5-5/migration-guide)、[Grok](https://docs.x.ai/developers/model-capabilities/text/generate-text)、[MiniMax](https://platform.minimax.io/docs/api-reference/text-openai-api)。预填 ID 并不保证账号有权限，报 404/403 时请读取列表并检查控制台。
+
+## 有免费档的候选
 
 | 平台 | 内置候选模型 | 条件与官方政策 |
 | --- | --- | --- |
@@ -47,6 +63,7 @@
 | 阶跃星辰 | [开放平台](https://platform.stepfun.com/) | 赠送额度和可调用模型随账号变化 |
 | DeepSeek | [API 文档](https://api-docs.deepseek.com/) | 不把免费网页聊天当成免费 API；读取实际模型 ID |
 | OpenAI | [官方模型说明](https://developers.openai.com/api/docs/models/gpt-4.1-mini) | 需可用 API 额度，ChatGPT 订阅不通用；预设不是免费承诺 |
+| xAI / Grok | [Responses API](https://docs.x.ai/developers/model-capabilities/text/generate-text) | 需可用 API 余额；网页会员与 API 权限不同 |
 | Anthropic Claude | [Messages API](https://docs.anthropic.com/en/api/messages) | 需要标准 API Key 与可用余额，读取账号可用模型 |
 | SambaNova | [开发文档](https://docs.sambanova.ai/docs/en/get-started/overview) | 试用资格、限额与模型随账号变化 |
 | Together AI | [快速开始](https://docs.together.ai/docs/quickstart) | 不保证新账号免费，需有赠送或充值额度 |

@@ -6,10 +6,21 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>LexiLens</AssemblyName>
     <RootNamespace>LexiLens.App</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
+    <PlatformTarget>x64</PlatformTarget>
     <Description>Game screen translation overlay for language learners</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../LexiLens.Core/LexiLens.Core.csproj" />
+    <PackageReference Include="Sdcb.PaddleOCR" Version="3.3.1" />
+    <PackageReference Include="Sdcb.PaddleOCR.Models.Local" Version="3.3.1" />
+    <PackageReference Include="Sdcb.PaddleInference.runtime.win64.mkl" Version="3.3.1.70" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
   </ItemGroup>
+  <!-- Only still-image OCR is used. Do not ship the unused FFmpeg video plugin. -->
+  <Target Name="RemoveUnusedVideoRuntime" BeforeTargets="_ComputeFilesToBundle" Condition="'$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="$([System.String]::Copy('%(ResolvedFileToPublish.Filename)').StartsWith('opencv_videoio_ffmpeg'))" />
+    </ItemGroup>
+  </Target>
 </Project>

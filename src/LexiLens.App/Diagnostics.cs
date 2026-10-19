@@ -38,6 +38,11 @@ internal static class Diagnostics
             report["credentialVaultEncrypted"] = !System.Text.Encoding.UTF8.GetString(vaultBytes).Contains(dummyKey, StringComparison.Ordinal);
             vault.Save(vaultScope, "");
             report["credentialVaultDeletion"] = vault.Read(vaultScope) == "";
+            vault.Save("deepseek|https://api.deepseek.com/v1/", dummyKey);
+            var migratedScope = CredentialVault.Scope("deepseek", new Uri("https://api.deepseek.com/"));
+            report["deepseekCredentialUpgrade"] = vault.Read(migratedScope) == dummyKey;
+            vault.Save(migratedScope, "");
+            report["deepseekCredentialUpgrade"] = report["deepseekCredentialUpgrade"] is true && vault.Read("deepseek|https://api.deepseek.com/v1/") == "";
             using var mockHttp = new HttpClient(new DiagnosticHandler());
             var wizard = new ProviderSetupWindow(new AppSettings(), mockHttp, vault) { Owner = window };
             wizard.Show();
@@ -69,6 +74,7 @@ internal static class Diagnostics
             var languages = ScreenTextSource.Languages();
             report["ocrLanguages"] = languages.Select(x => x.Tag).ToArray();
             var engine = OcrEngine.TryCreateFromLanguage(new Language("en-US"));
+            report["localOcrFontDiagnostics"] = await OcrFontDiagnostics.RunAsync(directory, engine);
             report["englishOcrAvailable"] = engine != null;
             if (engine != null)
             {
@@ -77,6 +83,10 @@ internal static class Diagnostics
                 var image = new RenderTargetBitmap(1000, 100, 96, 96, PixelFormats.Pbgra32);
                 image.Render(text);
                 var pixels = new byte[1000 * 100 * 4]; image.CopyPixels(pixels, 4000, 0);
+                var recognitionPreview = new RecognitionPreviewWindow(pixels, 1000, 100, "Find the ancient relic before dawn.", "本地识别检查 · 固定诊断样张") { Owner = window };
+                recognitionPreview.Show();
+                Render(recognitionPreview, Path.Combine(directory, "recognition-preview.png"));
+                recognitionPreview.Close();
                 var recognized = await ScreenTextSource.RecognizeBytesAsync(engine, pixels, 1000, 100, CancellationToken.None);
                 report["generatedImageOcr"] = recognized;
                 report["generatedImageOcrPassed"] = recognized.Contains("ancient relic", StringComparison.OrdinalIgnoreCase);
@@ -84,9 +94,10 @@ internal static class Diagnostics
                 var practice = new PracticeWindow { Topmost = true }; practice.Show(); practice.Activate();
                 await Task.Delay(500);
                 var region = practice.SubtitleRegion();
-                var source = new ScreenTextSource(region, "en-US", PracticeWindow.Samples[0].Text);
+                using var source = new ScreenTextSource(region, "en-US", PracticeWindow.Samples[0].Text);
                 var captured = await source.ReadAsync(CancellationToken.None);
                 report["desktopCaptureOcr"] = captured;
+                report["desktopCaptureOcrEngine"] = source.LastRecognition?.Engine;
                 report["desktopCaptureOcrPassed"] = TextProcessing.Normalize(captured).Contains("ancient relic", StringComparison.OrdinalIgnoreCase);
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(55));
                 var live = await window.VerifyLiveSessionAsync(region, timeout.Token);
@@ -107,6 +118,9 @@ internal static class Diagnostics
                 && report.GetValueOrDefault("credentialVaultDeletion") is true
                 && report.GetValueOrDefault("providerWizardInteraction") is true
                 && report.GetValueOrDefault("providerWizardApply") is true;
+            report["success"] = report["success"] is true && report.GetValueOrDefault("localOcrFontDiagnostics") is true
+                && report.GetValueOrDefault("deepseekCredentialUpgrade") is true
+                && (report.GetValueOrDefault("desktopCaptureOcrEngine") as string)?.Contains("PaddleOCR", StringComparison.Ordinal) == true;
         }
         catch (Exception ex) { report["error"] = ex.ToString(); report["success"] = false; }
         finally

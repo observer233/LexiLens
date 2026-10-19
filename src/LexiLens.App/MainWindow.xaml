@@ -17,7 +17,7 @@
         <StackPanel DockPanel.Dock="Bottom">
           <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,15"/>
           <TextBlock Text="为每一次看懂而设计" FontSize="11" Foreground="{StaticResource Muted}"/>
-          <TextBlock Text="v0.2.0  /  Windows" FontSize="10" Foreground="#66707D" Margin="0,7,0,0"/>
+          <TextBlock Text="v0.3.0  /  Windows" FontSize="10" Foreground="#66707D" Margin="0,7,0,0"/>
         </StackPanel>
         <StackPanel>
           <Button x:Name="LiveNav" Content="◉   实时翻译" Style="{StaticResource Nav}" Click="ShowLive" Background="#2B2B28" Foreground="{StaticResource Accent}"/>
@@ -63,7 +63,7 @@
                   <TextBlock x:Name="TranslationPreview" Text="在敌人到达前找到古代遗物。" FontSize="20" LineHeight="32" Foreground="{StaticResource Accent}"/>
                 </StackPanel>
               </ScrollViewer>
-              <Button Grid.Row="2" Content="预览悬浮窗  ↗" Click="PreviewOverlay" HorizontalAlignment="Left" FontSize="11" Padding="12,8"/>
+              <StackPanel Grid.Row="2" Orientation="Horizontal"><Button Content="预览悬浮窗  ↗" Click="PreviewOverlay" FontSize="11" Padding="12,8"/><Button Content="检查识别" Click="PreviewRecognition" FontSize="11" Padding="12,8" Margin="8,0,0,0"/></StackPanel>
             </Grid>
           </Border>
           <StackPanel Grid.Column="2">
@@ -104,10 +104,16 @@
           <Border Style="{StaticResource Card}" Margin="0,0,0,16"><StackPanel>
             <TextBlock Text="识别与翻译" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,18"/>
             <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="20"/><ColumnDefinition/></Grid.ColumnDefinitions>
-              <StackPanel><TextBlock Text="屏幕文字的语言（Windows OCR）" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><ComboBox x:Name="LanguageCombo" DisplayMemberPath="Name" SelectedValuePath="Tag"/></StackPanel>
+              <StackPanel><TextBlock Text="屏幕文字的语言" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><ComboBox x:Name="LanguageCombo" DisplayMemberPath="Name" SelectedValuePath="Tag"/></StackPanel>
               <StackPanel Grid.Column="2"><TextBlock Text="翻译服务" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,8"/><TextBlock x:Name="SettingsProviderSummary" FontSize="13"/><Button Content="打开翻译服务向导" Click="SetupProvider" Margin="0,9,0,0"/></StackPanel>
             </Grid>
             <TextBlock x:Name="ProviderNotice" Foreground="{StaticResource Accent}" FontSize="11" LineHeight="19" Margin="0,15,0,0"/>
+            <TextBlock Text="文字识别引擎" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,18,0,7"/>
+            <ComboBox x:Name="OcrModeCombo"><ComboBoxItem Content="本地增强 · PaddleOCR v5（推荐英文/中文，已内置）"/><ComboBoxItem Content="Windows OCR · 较轻量，使用系统语言包"/></ComboBox>
+            <TextBlock Text="增强图像方式" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,7"/>
+            <ComboBox x:Name="OcrImageCombo"><ComboBoxItem Content="自动 · 放大小字、增强对比度，低置信度时重试"/><ComboBoxItem Content="原图 · 保留彩色和字体细节"/><ComboBoxItem Content="暗底亮字 · 反色增强字幕"/><ComboBoxItem Content="低对比度 · 灰阶增强"/></ComboBox>
+            <TextBlock Text="增强引擎仅用 CPU，首次加载可能较慢；英文/中文无需额外安装。其他语言使用 Windows OCR。花体、像素字和文字特效仍可能识别错误，可用「检查识别」查看框选截图和原始识别结果。图像方式仅作用于增强引擎。" Foreground="{StaticResource Muted}" FontSize="11" LineHeight="19" Margin="0,9,0,0"/>
+            <Button Content="增强引擎加载失败？打开微软运行库安装说明 ↗" Click="OpenOcrRuntimeHelp" HorizontalAlignment="Left" FontSize="10" Padding="9,6" Margin="0,9,0,0"/>
             <TextBlock Text="扫描间隔（毫秒，350–5000）" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,17,0,7"/><TextBox x:Name="IntervalInput" Width="160" HorizontalAlignment="Left"/>
             <TextBlock Text="连续两次识别一致后翻译；实际延迟还取决于翻译服务。较短间隔会增加 CPU 使用。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,9,0,0"/>
           </StackPanel></Border>
@@ -122,6 +128,7 @@
         </StackPanel>
       </ScrollViewer>
       <StackPanel Grid.Row="1" Margin="0,20,0,0">
+        <TextBlock x:Name="RecognitionStatus" Text="本地增强识别 · 截图留在本机" Foreground="#9FD3B4" FontSize="10" Margin="0,0,0,7"/>
         <TextBlock x:Name="MessageLabel" Text="建议使用游戏的无边框窗口模式。先在练习场试试看。" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,12"/>
         <Border Height="1" Background="{StaticResource Line}"/>
         <TextBlock Text="Ctrl+Alt+T 开始/暂停     R 框选区域     H 隐藏悬浮窗     L 切换穿透（均加 Ctrl+Alt）" Foreground="#78828F" FontSize="10" Margin="0,13,0,0"/>

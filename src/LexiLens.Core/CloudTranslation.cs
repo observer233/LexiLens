@@ -31,6 +31,16 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
         HttpRequestMessage request;
         switch (_preset.Protocol)
         {
+            case ApiProtocol.Responses:
+                var responseBody = new Dictionary<string, object>
+                {
+                    ["model"] = _profile.Model, ["store"] = false, ["max_output_tokens"] = 2048,
+                    ["input"] = new[] { new { role = "system", content = system }, new { role = "user", content = text } }
+                };
+                if (_preset.Id == "xai" && _profile.Model == "grok-4.3") responseBody["reasoning"] = new { effort = "none" };
+                if (_preset.Id == "xai" && _profile.Model == "grok-4.7") responseBody["reasoning"] = new { effort = "low" };
+                request = new HttpRequestMessage(HttpMethod.Post, new Uri(endpoint, "responses")) { Content = JsonContent.Create(responseBody) };
+                break;
             case ApiProtocol.Gemini:
                 var model = _profile.Model.StartsWith("models/", StringComparison.Ordinal) ? _profile.Model[7..] : _profile.Model;
                 request = new HttpRequestMessage(HttpMethod.Post, new Uri(endpoint, $"models/{Uri.EscapeDataString(model)}:generateContent"))
@@ -44,9 +54,15 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
                 };
                 break;
             case ApiProtocol.Anthropic:
+                var anthropicBody = new Dictionary<string, object>
+                {
+                    ["model"] = _profile.Model, ["max_tokens"] = 2048, ["system"] = system,
+                    ["messages"] = new[] { new { role = "user", content = text } }
+                };
+                if (_profile.Model == "claude-haiku-5-5") anthropicBody["output_config"] = new { effort = "low" };
                 request = new HttpRequestMessage(HttpMethod.Post, new Uri(endpoint, "messages"))
                 {
-                    Content = JsonContent.Create(new { model = _profile.Model, max_tokens = 2048, system, messages = new[] { new { role = "user", content = text } } })
+                    Content = JsonContent.Create(anthropicBody)
                 };
                 break;
             default:
@@ -57,9 +73,14 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
                 };
                 // Avoid provider-specific parameters on other services/models.
                 if (_preset.Id == "zhipu" && _profile.Model.StartsWith("glm-4.5", StringComparison.Ordinal)) body["thinking"] = new { type = "disabled" };
+                if (_preset.Id == "deepseek" && (_profile.Model == "deepseek-flash" || _profile.Model.StartsWith("deepseek-v4", StringComparison.Ordinal))) body["thinking"] = new { type = "disabled" };
+                if (_preset.Id == "doubao" && _profile.Model.StartsWith("doubao-seed-2-", StringComparison.Ordinal)) body["thinking"] = new { type = "disabled" };
+                if (_preset.Id == "minimax" && _profile.Model == "MiniMax-M3") body["thinking"] = new { type = "disabled" };
+                if (_preset.Id == "minimax" && _profile.Model == "MiniMax-M3.1-Flash") body["reasoning_effort"] = "low";
+                if (_preset.Id == "minimax") body["reasoning_split"] = true;
+                if (_preset.Id == "dashscope" && _profile.Model is "qwen-flash" or "qwen-plus") body["enable_thinking"] = false;
                 if (_preset.Id is "siliconflow" or "modelscope" && _profile.Model.Contains("Qwen3", StringComparison.Ordinal)) body["enable_thinking"] = false;
-                if (_preset.Id == "openai") body["max_completion_tokens"] = 2048;
-                else if (_preset.Id == "doubao") body["max_completion_tokens"] = 2048;
+                if (_preset.Id is "doubao" or "minimax") body["max_completion_tokens"] = 2048;
                 else body["max_tokens"] = 2048;
                 if (_preset.Id == "openrouter" && (_profile.Model == "openrouter/free" || _profile.Model.EndsWith(":free", StringComparison.Ordinal)))
                     body["provider"] = new { max_price = new { prompt = 0, completion = 0 } };
@@ -143,7 +164,7 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
         if (response.IsSuccessStatusCode) return;
         var message = response.StatusCode switch
         {
-            HttpStatusCode.Unauthorized => "密钥无效、已过期或属于其他产品，请重新从标准 API 控制台复制。",
+            HttpStatusCode.Unauthorized => "密钥无效、已过期、地区不匹配或属于其他产品。请核对地区并从标准 API 控制台复制。",
             HttpStatusCode.Forbidden => "当前账号无权调用，或有地域/实名限制。请查看平台控制台。",
             HttpStatusCode.PaymentRequired => "额度已用完或账号余额不足。已停止本客户端后续请求，不自动切换模型或平台。",
             HttpStatusCode.TooManyRequests => "请求过于频繁或免费配额已用完。请等待或查看平台限额。",
@@ -167,6 +188,17 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
         string result;
         switch (_preset.Protocol)
         {
+            case ApiProtocol.Responses:
+                if (!root.TryGetProperty("status", out var status) || status.GetString() != "completed")
+                    throw new CloudApiException("模型未完整生成译文（长度、内容限制或服务错误），请缩小区域或更换文本模型。");
+                if (!root.TryGetProperty("output", out var outputItems)) throw new CloudApiException("平台未返回有效译文。");
+                result = string.Concat(outputItems.EnumerateArray()
+                    .Where(x => x.TryGetProperty("type", out var type) && type.GetString() == "message" && x.TryGetProperty("content", out _))
+                    .SelectMany(x => x.GetProperty("content").EnumerateArray())
+                    .Where(x => x.TryGetProperty("type", out var type) && type.GetString() == "output_text" && x.TryGetProperty("text", out _))
+                    .Select(x => x.GetProperty("text").GetString()));
+                if (root.TryGetProperty("usage", out var responsesUsage) && responsesUsage.TryGetProperty("total_tokens", out var responsesTotal)) ReportedTokens += responsesTotal.GetInt64();
+                break;
             case ApiProtocol.Gemini:
                 if (!root.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
                     throw new CloudApiException("Gemini 未返回译文，可能触发内容限制。可缩小区域后重试。");
@@ -179,8 +211,8 @@ public sealed class CloudTranslation(HttpClient http, AppSettings settings, stri
                 if (root.TryGetProperty("usageMetadata", out var usage) && usage.TryGetProperty("totalTokenCount", out var total)) ReportedTokens += total.GetInt64();
                 break;
             case ApiProtocol.Anthropic:
-                if (root.TryGetProperty("stop_reason", out var stop) && stop.GetString() == "max_tokens")
-                    throw new CloudApiException("Claude 返回内容被长度限制截断，请缩小区域。");
+                if (root.TryGetProperty("stop_reason", out var stop) && stop.GetString() is "max_tokens" or "refusal" or "model_context_window_exceeded")
+                    throw new CloudApiException("Claude 未完整生成译文（长度或内容限制），请缩小区域。");
                 result = string.Concat(root.GetProperty("content").EnumerateArray().Where(x => x.GetProperty("type").GetString() == "text").Select(x => x.GetProperty("text").GetString()));
                 if (root.TryGetProperty("usage", out var anthropicUsage))
                 {

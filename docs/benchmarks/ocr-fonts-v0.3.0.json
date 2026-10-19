@@ -1,0 +1,93 @@
+{
+  "samples": [
+    {
+      "Name": "sans",
+      "Font": "Segoe UI",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Retrieve the ancient relic before dawn.",
+      "enhanced": "Retrieve the ancient relic before dawn.",
+      "windowsCer": 0,
+      "enhancedCer": 0,
+      "Confidence": 0.9793456792831421,
+      "Milliseconds": 2275
+    },
+    {
+      "Name": "serif-italic",
+      "Font": "Georgia",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Retrieve the ancient relic before dawn.",
+      "enhanced": "Retrieve the ancient relic before dawn.",
+      "windowsCer": 0,
+      "enhancedCer": 0,
+      "Confidence": 0.9984028339385986,
+      "Milliseconds": 746
+    },
+    {
+      "Name": "condensed",
+      "Font": "Impact",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Retrieve the ancient relic before dawn.",
+      "enhanced": "Retrieve the ancient relic before dawn.",
+      "windowsCer": 0,
+      "enhancedCer": 0,
+      "Confidence": 0.9882635474205017,
+      "Milliseconds": 704
+    },
+    {
+      "Name": "script",
+      "Font": "Segoe Script",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "am.c\u00C6.z,vt.t .",
+      "enhanced": "Retrieue the ancient relic before dawn.",
+      "windowsCer": 0.9090909090909091,
+      "enhancedCer": 0.030303030303030304,
+      "Confidence": 0.9752315878868103,
+      "Milliseconds": 798
+    },
+    {
+      "Name": "brush",
+      "Font": "Brush Script MT",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Renege cetie",
+      "enhanced": "Retrieve the ancient relic before dawn.",
+      "windowsCer": 0.7272727272727273,
+      "enhancedCer": 0,
+      "Confidence": 0.9735243320465088,
+      "Milliseconds": 627
+    },
+    {
+      "Name": "outlined",
+      "Font": "Georgia",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Retieve the an\u00FCnt relic before dawmo",
+      "enhanced": "Retrieve the ancient relic before dawm.",
+      "windowsCer": 0.18181818181818182,
+      "enhancedCer": 0.030303030303030304,
+      "Confidence": 0.975009024143219,
+      "Milliseconds": 760
+    },
+    {
+      "Name": "small",
+      "Font": "Segoe UI",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Retrieve the ancient relic before dawn.",
+      "enhanced": "Retrieve the ancient relic before dawn.",
+      "windowsCer": 0,
+      "enhancedCer": 0,
+      "Confidence": 0.970737874507904,
+      "Milliseconds": 775
+    },
+    {
+      "Name": "low-contrast",
+      "Font": "Georgia",
+      "expected": "Retrieve the ancient relic before dawn.",
+      "windows": "Retrieve the ancient relic before dawn",
+      "enhanced": "Retrieve the ancient relic before dawn.",
+      "windowsCer": 0,
+      "enhancedCer": 0,
+      "Confidence": 0.9984357357025146,
+      "Milliseconds": 656
+    }
+  ],
+  "blankResult": ""
+}

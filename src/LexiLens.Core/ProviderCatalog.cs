@@ -1,7 +1,8 @@
 namespace LexiLens.Core;
 
-public enum ApiProtocol { ChatCompletions, Gemini, Anthropic }
+public enum ApiProtocol { ChatCompletions, Gemini, Anthropic, Responses }
 public enum AccessCategory { FreeTier, TrialOrCredits, PaidOrUnknown, Custom }
+public sealed record ServiceEndpoint(string Name, string Url);
 
 public sealed record CloudPreset(
     string Id, string Name, ApiProtocol Protocol, string Endpoint,
@@ -17,6 +18,14 @@ public sealed record CloudPreset(
     };
     public string DisplayName => $"{Name}  ·  {CategoryLabel}";
     public CloudProfile DefaultProfile => new() { Model = Models.FirstOrDefault() ?? "" };
+    public IReadOnlyList<ServiceEndpoint> Endpoints => Id switch
+    {
+        "dashscope" => [new("中国 · 北京", Endpoint), new("新加坡", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+            new("美国 · 弗吉尼亚", "https://dashscope-us.aliyuncs.com/compatible-mode/v1"), new("中国 · 香港", "https://cn-hongkong.dashscope.aliyuncs.com/compatible-mode/v1")],
+        "moonshot" => [new("中国", Endpoint), new("国际", "https://api.moonshot.ai/v1")],
+        "minimax" => [new("中国", Endpoint), new("国际", "https://api.minimax.io/v1")],
+        _ => [new("官方默认", Endpoint)]
+    };
 }
 
 // Reviewed 2026-10-20. These are connection presets, never shared credentials or
@@ -60,10 +69,10 @@ public static class ProviderCatalog
             [], "Inference Providers 权限、赠送额度和计费按账号及供应商变化；网页免费聊天不代表 API 免费。先读取模型列表再选择。",
             "https://huggingface.co/settings/tokens", "https://huggingface.co/docs/inference-providers/pricing", "具有推理权限的 HF Token"),
         new("dashscope", "阿里云百炼 / 通义千问", ApiProtocol.ChatCompletions, "https://dashscope.aliyuncs.com/compatible-mode/v1", AccessCategory.TrialOrCredits,
-            ["qwen-turbo", "qwen-plus"], "新用户部分模型有时效性赠送额度；用完可能计费。请在百炼开启免费额度用完即停，并选择正确地域的 Key。",
+            ["qwen-flash", "qwen-plus"], "API Key 与地域绑定，请先选择与 Key 相同的地区。新用户赠送额度有期限，用完可能计费；Coding Plan Key 不通用。工作空间专属域名可填在高级地址中。",
             "https://bailian.console.aliyun.com/", "https://help.aliyun.com/zh/model-studio/new-free-quota"),
         new("doubao", "火山方舟 / 豆包", ApiProtocol.ChatCompletions, "https://ark.cn-beijing.volces.com/api/v3", AccessCategory.TrialOrCredits,
-            [], "需开通模型，填写控制台的模型 ID 或推理接入点 ID。新用户请核对安心体验模式及赠送额度，避免超额计费。",
+            ["doubao-seed-2-1-lite-260915", "doubao-seed-2-1-pro-260915", "doubao-seed-2-1-turbo-260628"], "先在火山方舟开通模型。可选预填模型 ID，或直接粘贴 ep- 开头的推理接入点 ID。使用方舟 API Key；豆包 App 登录和 Coding Plan Key 不通用。请核对体验额度。",
             "https://ark.volcengine.com/region:cn-beijing/apikey", "https://docs.volcengine.com/docs/ark/chat-api"),
         new("baidu", "百度智能云千帆", ApiProtocol.ChatCompletions, "https://qianfan.baidubce.com/v2", AccessCategory.TrialOrCredits,
             [], "需标准 API Key 和已开通的模型。免费模型或活动额度以控制台当前政策为准；不使用旧版 AK/SK 鉴权。",
@@ -75,19 +84,22 @@ public static class ProviderCatalog
             ["kimi-k2.6"], "标准 API 按账号额度计费。聊天会员和编程套餐不等于本工具可用的通用 API 余额。",
             "https://platform.kimi.com/console/api-keys", "https://platform.kimi.com/docs/get-api-key"),
         new("minimax", "MiniMax", ApiProtocol.ChatCompletions, "https://api.minimaxi.com/v1", AccessCategory.PaidOrUnknown,
-            [], "使用国内标准文本 API Key；赠送额度、可调用模型与套餐限制以控制台为准。请读取或填写实际模型 ID。",
+            ["MiniMax-M3", "MiniMax-M3.1-Flash"], "按地区选择标准 API Key；网页订阅不等于 API 余额。M3 默认关闭思考；M3.1-Flash 必须思考，使用 low 深度，仍可能比普通文本模型慢。",
             "https://platform.minimaxi.com/user-center/basic-information/interface-key", "https://platform.minimaxi.com/docs/api-reference/text-openai-api"),
         new("stepfun", "阶跃星辰", ApiProtocol.ChatCompletions, "https://api.stepfun.com/v1", AccessCategory.TrialOrCredits,
             [], "部分账号可能有活动赠送额度，不能保证免费。使用已开通模型 ID；剩余额度及有效期以控制台为准。",
             "https://platform.stepfun.com/", "https://platform.stepfun.com/docs"),
-        new("deepseek", "DeepSeek", ApiProtocol.ChatCompletions, "https://api.deepseek.com/v1", AccessCategory.PaidOrUnknown,
-            [], "官方 API 按量计费，不把免费网页聊天视为免费 API。请读取模型列表并确认余额。",
+        new("deepseek", "DeepSeek", ApiProtocol.ChatCompletions, "https://api.deepseek.com", AccessCategory.PaidOrUnknown,
+            ["deepseek-flash", "deepseek-v4-pro"], "使用 DeepSeek 开放平台 API Key 与 API 余额。默认关闭思考以降低字幕延迟；免费网页聊天账号不代表有 API 额度。可读取最新模型列表。",
             "https://platform.deepseek.com/api_keys", "https://api-docs.deepseek.com/"),
-        new("openai", "OpenAI", ApiProtocol.ChatCompletions, "https://api.openai.com/v1", AccessCategory.PaidOrUnknown,
+        new("openai", "ChatGPT / OpenAI API", ApiProtocol.Responses, "https://api.openai.com/v1", AccessCategory.PaidOrUnknown,
             ["gpt-4.1-mini"], "标准 API 需可用 API 余额；ChatGPT 免费版、Plus/Pro 订阅不等于 API 额度。本预设不承诺赠送额度。",
             "https://platform.openai.com/api-keys", "https://developers.openai.com/api/docs/models/gpt-4.1-mini"),
+        new("xai", "xAI / Grok", ApiProtocol.Responses, "https://api.x.ai/v1", AccessCategory.PaidOrUnknown,
+            ["grok-4.3", "grok-4.7"], "使用 xAI API Key 与可用 API 余额。Grok 网页订阅不等于 API 权限。4.3 默认关闭思考；4.7 使用低思考深度，字幕可能较慢。",
+            "https://console.x.ai/", "https://docs.x.ai/developers/model-capabilities/text/generate-text"),
         new("anthropic", "Anthropic Claude", ApiProtocol.Anthropic, "https://api.anthropic.com/v1", AccessCategory.PaidOrUnknown,
-            [], "标准 Messages API 需可用余额和 API Key，Claude 网页订阅不通用。请读取账号可用模型。",
+            ["claude-haiku-5-5"], "标准 Messages API 需可用余额和 API Key，Claude 网页订阅不直接通用。可读取账号可用模型；若账号有订阅附赠 API 积分，请在平台核对适用模型和有效期。",
             "https://console.anthropic.com/settings/keys", "https://docs.anthropic.com/en/api/messages"),
         new("sambanova", "SambaNova", ApiProtocol.ChatCompletions, "https://api.sambanova.ai/v1", AccessCategory.TrialOrCredits,
             [], "试用额度、模型和请求限额随账号变化，请先在控制台核对并读取可用模型。",
@@ -123,8 +135,8 @@ public static class ProviderCatalog
             || uri.Scheme is not ("http" or "https") || uri.UserInfo.Length > 0 || uri.Query.Length > 0 || uri.Fragment.Length > 0)
             throw new ArgumentException("服务地址格式无效，请填写平台文档中的 API 根地址，不包含密钥或查询参数。");
         if (uri.Scheme == "http" && !uri.IsLoopback) throw new ArgumentException("远程服务需要 HTTPS，本机服务可使用 HTTP。");
-        if (!string.IsNullOrWhiteSpace(profile.Endpoint) && uri.AbsolutePath.TrimEnd('/').EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("请填写 API 根地址（通常以 /v1 结尾），去掉 /chat/completions。");
+        if (!string.IsNullOrWhiteSpace(profile.Endpoint) && new[] { "/chat/completions", "/responses", "/messages" }.Any(x => uri.AbsolutePath.TrimEnd('/').EndsWith(x, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("请填写 API 根地址（通常以 /v1 结尾），去掉 /chat/completions、/responses 或 /messages。");
         return uri;
     }
 }

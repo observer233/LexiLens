@@ -1,6 +1,8 @@
 namespace LexiLens.Core;
 
 public enum TranslationProvider { MyMemory, Ollama, Cloud }
+public enum OcrMode { Enhanced, Windows }
+public enum OcrImageMode { Auto, Original, LightOnDark, LowContrast }
 
 public sealed record CloudProfile
 {
@@ -26,6 +28,8 @@ public sealed record AppSettings
     public string CloudServiceId { get; init; } = "zhipu";
     public Dictionary<string, CloudProfile> CloudProfiles { get; init; } = new();
     public bool OnboardingCompleted { get; init; }
+    public OcrMode OcrMode { get; init; } = OcrMode.Enhanced;
+    public OcrImageMode OcrImageMode { get; init; } = OcrImageMode.Auto;
     public int ScanIntervalMs { get; init; } = 700;
     public double OverlayOpacity { get; init; } = 0.92;
     public double FontSize { get; init; } = 21;
@@ -44,7 +48,9 @@ public sealed record AppSettings
         OllamaModel = string.IsNullOrWhiteSpace(OllamaModel) ? "qwen2.5:3b" : OllamaModel.Trim(),
         CloudServiceId = ProviderCatalog.Find(CloudServiceId)?.Id ?? "zhipu",
         CloudProfiles = CloudProfiles ?? new(),
-        Provider = Enum.IsDefined(Provider) ? Provider : TranslationProvider.MyMemory
+        Provider = Enum.IsDefined(Provider) ? Provider : TranslationProvider.MyMemory,
+        OcrMode = Enum.IsDefined(OcrMode) ? OcrMode : OcrMode.Enhanced,
+        OcrImageMode = Enum.IsDefined(OcrImageMode) ? OcrImageMode : OcrImageMode.Auto
     };
 }
 
