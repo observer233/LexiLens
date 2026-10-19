@@ -24,7 +24,7 @@ Find the ancient relic before davvn.
 
 [实验输出](benchmarks/wait-jitter-v030.json)。现有回归测试 `PipelineTests.AlternatingMinorOcrErrorsStillTranslateAndReportEveryStage` 覆盖这一触发条件。
 
-修复：容忍少量编辑差异，数字序列必须一致，短文本保守判断；连续两次近似结果即可提交，持续变化三次则提交当前结果。新增“翻译一次”直接提交当次结果，绕过稳定等待。
+修复：容忍少量编辑差异，数字序列必须一致，短文本保守判断；连续两次近似结果即可提交，持续变化三次则提交当前结果。相近的新名称/字母连续两次完全一致时也会更新，避免去重吞掉真实变化。新增“翻译一次”直接提交当次结果，绕过稳定等待。
 
 ### 2. 空 OCR 与实际识别状态不可见
 

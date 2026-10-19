@@ -6,11 +6,12 @@ namespace LexiLens.Core;
 public sealed class TextStabilizer
 {
     private string _previous = "", _accepted = "";
-    private int _repeats, _pending;
+    private int _repeats, _exactRepeats, _pending;
 
     public StabilizedText Observe(string text)
     {
         text = TextProcessing.Normalize(text);
+        _exactRepeats = text == _previous ? _exactRepeats + 1 : 1;
         _repeats = Similar(text, _previous) ? _repeats + 1 : 1;
         _previous = text;
         if (text == "")
@@ -19,7 +20,10 @@ public sealed class TextStabilizer
             if (_repeats >= 3 && _accepted.Length > 0) { _accepted = ""; return new("", true, "TEXT_CLEARED"); }
             return new(text, false, "OCR_EMPTY");
         }
-        if (Similar(text, _accepted)) { _pending = 0; return new(text, false, "TEXT_UNCHANGED"); }
+        // A genuinely changed letter/name repeated exactly must eventually win
+        // over fuzzy deduplication. Alternating OCR jitter still stays suppressed.
+        if (text == _accepted || (Similar(text, _accepted) && _exactRepeats < 2))
+        { _pending = 0; return new(text, false, "TEXT_UNCHANGED"); }
         _pending++;
         if (_repeats >= 2 || _pending >= 3)
         {

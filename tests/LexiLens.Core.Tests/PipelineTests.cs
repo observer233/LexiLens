@@ -37,6 +37,11 @@ public class PipelineTests
         Assert.True(third.Submit); Assert.Equal("TEXT_DEBOUNCE_LIMIT", third.Code);
         Assert.False(TextStabilizer.Similar("Collect 3 of the ancient relics", "Collect 4 of the ancient relics"));
         Assert.False(TextStabilizer.Similar("First quest", "Other quest"));
+        var letters = new TextStabilizer();
+        letters.Observe("Return to the western gate A.");
+        Assert.True(letters.Observe("Return to the western gate A.").Submit);
+        Assert.False(letters.Observe("Return to the western gate B.").Submit);
+        Assert.True(letters.Observe("Return to the western gate B.").Submit);
     }
 
     [Theory]
