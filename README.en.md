@@ -2,6 +2,8 @@
 
 A Windows screen translation tool with a bilingual overlay and an English vocabulary list.
 
+The current development branch adds [phase-one capture and latency diagnostics](docs/CAPTURE_VALIDATION.md): GDI/WGC HWND capture, native subtitle ROI, monotonic telemetry and measured game-menu runs with the existing Zhipu service. This is partial validation, not a new stable release or proof that brief dialogue is translated in time. Portable builds now default to PaddleOCR; Windows OCR requires documented package identity support.
+
 [Download](https://github.com/observer233/LexiLens/releases/latest) · [中文](README.md) · [Setup](docs/USER_GUIDE.md) · [Bug analysis](docs/BUG_ANALYSIS.md)
 
 ![LexiLens v0.6.0](docs/images/main.png)

@@ -267,7 +267,6 @@ public partial class MainWindow : Window
 
     private async Task RunSpatialAsync(AreaState state, ScreenTextSource source, CancellationToken ct, Func<bool> current, bool once)
     {
-        source.ImmediateEmpty = true;
         if (state.Number >= 0) source.IncludeBlock = block =>
         {
             var x = state.Area.Region.X + (block.Bounds.X + block.Bounds.Width / 2) * state.Area.Region.Width;
@@ -293,13 +292,16 @@ public partial class MainWindow : Window
             }
         }
         overlay.ApplySettings(_settings); overlay.SetLocked(true);
+        overlay.Progress = item => { if (current()) Record(item with { Area = state.Number }); };
         source.Progress = item => { if (current()) Record(item with { Area = state.Number }); };
         source.Status = status => Dispatcher.BeginInvoke(() => { if (current()) { state.Status = status; if (state.Area.Id == SelectedArea?.Id) RecognitionStatus.Text = status; } });
-        var session = new SpatialSession(source, _translator, _settings.FastMode ? _settings.FastIntervalMs : _settings.ScanIntervalMs, _settings.FastMode, _settings.AutoBlockLimit);
+        var session = new SpatialSession(source, _translator, _settings.FastMode ? _settings.FastIntervalMs : _settings.ScanIntervalMs, _settings.FastMode, _settings.AutoBlockLimit, area: state.Number);
+        overlay.ResetTelemetry(); overlay.IsCurrentBlock = session.IsCurrent;
         session.Progress += item => { if (current()) Record(item with { Area = state.Number }); };
         session.Updated += blocks => Dispatcher.BeginInvoke(() =>
         {
             if (!current()) return;
+            blocks = blocks.Where(session.IsCurrent).ToArray();
             state.Blocks = blocks;
             state.Source = string.Join("\n\n", blocks.Select(x => $"[{x.Id}] {x.Source}"));
             state.Translation = string.Join("\n\n", blocks.Select(x => $"[{x.Id}] {x.Error ?? x.Translation ?? "翻译中…"}"));
@@ -406,7 +408,9 @@ public partial class MainWindow : Window
             if (fromGame)
             {
                 ShowActivated = false; WindowState = WindowState.Minimized; Show(); ShowActivated = true;
-                NativeMethods.SetForegroundWindow(foreground);
+                var restored = NativeMethods.SetForegroundWindow(foreground);
+                Record(new(PipelineStage.Session, restored && NativeMethods.GetForegroundWindow() == foreground ? PipelineState.Success : PipelineState.Warning,
+                    restored && NativeMethods.GetForegroundWindow() == foreground ? "PICK_FOCUS_RESTORED" : "PICK_FOCUS_RESTORE_FAILED", "划选结束后的前景窗口恢复检查"));
             }
             else { Show(); WindowState = oldState; }
             foreach (var overlay in visible.Where(x => x.IsLoaded)) if (!_overlaysHidden) overlay.Show();
@@ -1000,6 +1004,7 @@ public partial class MainWindow : Window
 
     private async void UseWindowsOcr(object sender, RoutedEventArgs e)
     {
+        if (!WindowsOcrSupport.HasPackageIdentity) { MessageLabel.Text = "Windows OCR 官方要求 MSIX 包身份；当前便携版请使用本地增强识别。"; return; }
         if (_transition) return;
         _transition = true;
         try { await StopAsync(); _settings = _settings with { OcrMode = OcrMode.Windows }; _store.Save("settings.json", _settings); OcrModeCombo.SelectedIndex = 1; MessageLabel.Text = "已切换 Windows OCR，可重新翻译一次。"; }
@@ -1012,6 +1017,12 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() != true) return;
         try { File.WriteAllText(dialog.FileName, _journal.Export(_settings, "0.6.0"), new UTF8Encoding(false)); MessageLabel.Text = "诊断报告已导出。"; }
         catch (Exception ex) { MessageLabel.Text = ex.Message; }
+    }
+
+    private async void OpenCaptureDiagnostics(object sender, RoutedEventArgs e)
+    {
+        await StopAsync(); await StopQuickAsync();
+        new CaptureDiagnosticsWindow(_settings) { Owner = this }.Show();
     }
 
     private void OpenLogFolder(object sender, RoutedEventArgs e)

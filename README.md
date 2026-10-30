@@ -2,6 +2,8 @@
 
 Windows 屏幕翻译工具。选择游戏窗口或字幕区域，在悬浮窗中查看中文译文，点击英文单词收藏到生词本。
 
+当前开发分支提供[第一阶段捕获与延迟验证](docs/CAPTURE_VALIDATION.md)：GDI/WGC HWND + 字幕 ROI、单调时钟日志、真实游戏菜单与智谱实测。只完成部分验证，尚未验证短时对白、漏句或游戏帧时间；没有发布新的稳定版本。
+
 [下载 Windows 版](https://github.com/observer233/LexiLens/releases/latest) · [使用指南](docs/USER_GUIDE.md) · [卡住问题分析](docs/BUG_ANALYSIS.md) · [AI 平台配置](docs/AI_PLATFORMS.md) · [English](README.en.md)
 
 ![LexiLens v0.6.0 自动分段界面（固定练习样例，模拟译文）](docs/images/main.png)
@@ -37,7 +39,7 @@ Windows 屏幕翻译工具。选择游戏窗口或字幕区域，在悬浮窗中
 
 ## 识别和翻译服务
 
-快速自动分段优先使用 Windows OCR，空结果立即撤层；固定悬浮快速模式仍可在空结果时尝试增强引擎。特殊字体可取消“快速字幕”，按所选引擎识别。英文/中文增强模式使用内置 PaddleOCR v5 CPU，支持自动、原图、暗底亮字和低对比度处理；其他语言使用系统 OCR。可手动选择 Windows OCR。置信度是模型分数，特殊花体仍可能认错；点击“检查识别”查看选区和原文。[字体测试](docs/OCR.md)
+英文/中文增强模式使用内置 PaddleOCR v5 CPU，支持自动、原图、暗底亮字和低对比度处理。当前开发版本已移除快速原位模式跳过增强空结果检查的捷径；便携版默认使用 Paddle，Windows OCR 官方要求 MSIX 包身份及对应语言功能。其他语言的 Windows OCR 不能作为便携支持保证。置信度是模型分数，特殊花体仍可能认错；点击“检查识别”查看选区和原文。[字体测试](docs/OCR.md)
 
 支持 25 个云平台，以及自定义兼容服务和 Ollama。智谱、DeepSeek、豆包、千问、OpenAI、Claude、Gemini、Grok 等均可使用自己的标准 API Key；平台默认全部显示。免费档、赠送额度、付费 API 分别标注。[配置与验证范围](docs/AI_PLATFORMS.md)
 

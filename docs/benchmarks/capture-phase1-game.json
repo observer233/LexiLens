@@ -1,0 +1,2955 @@
+{
+  "schemaVersion": 1,
+  "recordedLocalDate": "2026-10-30",
+  "evidenceKind": "real-game-menu-and-real-service-before-and-after-geometry-fix",
+  "scene": "unchanged difficulty menu with start confirmation; no timed dialogue or cutscene",
+  "hardware": {
+    "cpu": "AMD Ryzen 5 7500F",
+    "gpu": "NVIDIA GeForce RTX 2080 Ti"
+  },
+  "captureSetup": {
+    "windowPhysicalPixels": [
+      1708,
+      994
+    ],
+    "roiPhysicalPixels": [
+      1538,
+      358
+    ],
+    "normalizedRoi": {
+      "X": 0.05,
+      "Y": 0.58,
+      "Width": 0.9,
+      "Height": 0.36
+    },
+    "dpi": null
+  },
+  "sourceRecording": {
+    "capturedRoiFrames": 74,
+    "durationMilliseconds": 12012.5725,
+    "privacy": "Images, reference text, titles, HWNDs, local paths and keys omitted from this public evidence."
+  },
+  "serviceVerification": {
+    "provider": "zhipu",
+    "model": "glm-4.5-flash",
+    "actualHttpValidResponsesObserved": true,
+    "credentialsPublished": false
+  },
+  "sampledAccuracyBeforeGeometryFix": {
+    "rawOcr": {
+      "annotatedFramesRead": 12,
+      "referenceCharacters": 612,
+      "characterErrors": 32,
+      "sampledFrameCer": 0.05228758169934641,
+      "exactFrames": 0,
+      "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; repeated reads of a frame counted once"
+    },
+    "spatialOutput": {
+      "annotatedFramesRead": 12,
+      "referenceCharacters": 612,
+      "characterErrors": 272,
+      "sampledFrameCer": 0.4444444444444444,
+      "exactFrames": 0,
+      "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; repeated reads of a frame counted once"
+    },
+    "earlierReplayMislabelledOcrQuality": {
+      "sampledFrameCer": 0.44385026737967914,
+      "actualMeaning": "spatial-output CER, not raw OCR CER",
+      "annotatedFramesRead": 11,
+      "referenceCharacters": 561,
+      "characterErrors": 249
+    },
+    "scope": "Only annotated frames actually read; repeated reads deduplicated. Not full-clip recall. Initial two-line order is faulty in spatial output."
+  },
+  "runs": {
+    "recordedMenuReplay": {
+      "backend": "Replay",
+      "diagnosticRunCompleted": true,
+      "elapsedMilliseconds": 12612.679,
+      "translateEnabled": true,
+      "fastMode": true,
+      "ocrMode": "Enhanced",
+      "sampleIntervalMilliseconds": 150,
+      "packageIdentity": false,
+      "service": "zhipu",
+      "model": "glm-4.5-flash",
+      "durationByCode": [
+        {
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 5,
+          "p50": 0.004,
+          "p95": 0.009,
+          "min": 0.004,
+          "max": 0.009
+        },
+        {
+          "code": "API_RATE_WAIT",
+          "phase": "warm",
+          "samples": 5,
+          "p50": 0.003,
+          "p95": 328.091,
+          "min": 0.002,
+          "max": 410.099
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 3947.149,
+          "p95": 4183.832,
+          "min": 3684.168,
+          "max": 4210.13
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 7.734,
+          "p95": 7.734,
+          "min": 7.734,
+          "max": 7.734
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "warm",
+          "samples": 10,
+          "p50": 0.124,
+          "p95": 3.673,
+          "min": 0.083,
+          "max": 5.832
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "cold",
+          "samples": 3,
+          "p50": 4.531,
+          "p95": 4.65,
+          "min": 4.164,
+          "max": 4.663
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 7,
+          "p50": 43.812,
+          "p95": 3887.441,
+          "min": 1.418,
+          "max": 4138.993
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "cold",
+          "samples": 3,
+          "p50": 0.298,
+          "p95": 4.377,
+          "min": 0.037,
+          "max": 4.83
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "warm",
+          "samples": 7,
+          "p50": 0.009,
+          "p95": 0.032,
+          "min": 0.001,
+          "max": 0.033
+        },
+        {
+          "code": "BLOCK_TRANSLATED",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 4157.789,
+          "p95": 4214.156,
+          "min": 4095.16,
+          "max": 4220.419
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 616.532,
+          "p95": 616.532,
+          "min": 616.532,
+          "max": 616.532
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "warm",
+          "samples": 74,
+          "p50": 4.389,
+          "p95": 7.873,
+          "min": 0.004,
+          "max": 12.261
+        },
+        {
+          "code": "CAPTURE_SOURCE_STARTUP",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 9.107,
+          "p95": 9.107,
+          "min": 9.107,
+          "max": 9.107
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 622.227,
+          "p95": 622.227,
+          "min": 622.227,
+          "max": 622.227
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "warm",
+          "samples": 11,
+          "p50": 0.009,
+          "p95": 0.053,
+          "min": 0.007,
+          "max": 0.085
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "warm",
+          "samples": 74,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "HTTP_200",
+          "phase": "warm",
+          "samples": 3,
+          "p50": 3681.842,
+          "p95": 4157.162,
+          "min": 860.771,
+          "max": 4209.975
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2655.408,
+          "p95": 2655.408,
+          "min": 2655.408,
+          "max": 2655.408
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "warm",
+          "samples": 10,
+          "p50": 761.097,
+          "p95": 1008.397,
+          "min": 710.633,
+          "max": 1090.391
+        },
+        {
+          "code": "WINDOWS_OCR_SUPPORT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      ],
+      "requestDurationByCode": [
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 4210.13,
+          "p95": 4210.13,
+          "min": 4210.13,
+          "max": 4210.13
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "warm",
+          "samples": 1,
+          "p50": 3684.168,
+          "p95": 3684.168,
+          "min": 3684.168,
+          "max": 3684.168
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 4209.975,
+          "p95": 4209.975,
+          "min": 4209.975,
+          "max": 4209.975
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "warm",
+          "samples": 2,
+          "p50": 2271.307,
+          "p95": 3540.788,
+          "min": 860.771,
+          "max": 3681.842
+        }
+      ],
+      "validOverlayAge": [
+        {
+          "phase": "warm",
+          "samples": 2,
+          "p50": 5352.288,
+          "p95": 5402.345,
+          "min": 5296.668,
+          "max": 5407.907
+        }
+      ],
+      "queueMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_ERROR",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_FAILED",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "droppedCounterMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "API_ERROR",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_FAILED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "CAPTURE_OK",
+          "maximumObserved": 61
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 59
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 59
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "eventCounts": {
+        "API_CLIENT_QUEUE_WAIT": 5,
+        "API_ERROR": 1,
+        "API_RATE_WAIT": 5,
+        "API_REQUEST_COMPLETE": 2,
+        "API_REQUEST_FAILED": 3,
+        "API_REQUEST_SENT": 5,
+        "BLOCKS_LOCATED": 11,
+        "BLOCK_QUEUED": 10,
+        "BLOCK_QUEUE_WAIT": 10,
+        "BLOCK_REQUEST_STALE": 5,
+        "BLOCK_STABLE": 10,
+        "BLOCK_TRANSLATED": 2,
+        "BLOCK_TRANSLATING": 5,
+        "CAPTURE_BACKLOG": 4,
+        "CAPTURE_DIAGNOSTIC_START": 1,
+        "CAPTURE_DIAGNOSTIC_STOP": 1,
+        "CAPTURE_OK": 75,
+        "CAPTURE_SOURCE_STARTUP": 1,
+        "FRAME_DEQUEUE": 12,
+        "FRAME_WAIT": 75,
+        "HTTP_200": 3,
+        "OCR_OK": 11,
+        "OCR_START": 12,
+        "OVERLAY_VISIBLE": 2,
+        "WINDOWS_OCR_SUPPORT": 1
+      },
+      "fallbackEventCounts": {
+        "package_identity_required": 103
+      },
+      "unmeasured": {
+        "completeClipSentenceRecognitionAccuracy": null,
+        "translationAccuracy": null,
+        "gameFrameTimeMilliseconds": null,
+        "missedSentences": null,
+        "expiredTranslations": null
+      },
+      "requestOutcomes": {
+        "sent": 5,
+        "validComplete": 2,
+        "emptyContentErrorAfterHttp200": 1,
+        "cancelledAtRunEnd": 2,
+        "validOverlayEvents": 2
+      }
+    },
+    "liveMenuWgc": {
+      "backend": "Wgc",
+      "diagnosticRunCompleted": true,
+      "elapsedMilliseconds": 15084.2253,
+      "translateEnabled": true,
+      "fastMode": true,
+      "ocrMode": "Enhanced",
+      "sampleIntervalMilliseconds": 150,
+      "packageIdentity": false,
+      "service": "zhipu",
+      "model": "glm-4.5-flash",
+      "durationByCode": [
+        {
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 0.007,
+          "p95": 0.009,
+          "min": 0.005,
+          "max": 0.009
+        },
+        {
+          "code": "API_RATE_WAIT",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 198.754,
+          "p95": 377.588,
+          "min": 0.05,
+          "max": 397.458
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 5.771,
+          "p95": 5.771,
+          "min": 5.771,
+          "max": 5.771
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "warm",
+          "samples": 14,
+          "p50": 0.132,
+          "p95": 2.792,
+          "min": 0.072,
+          "max": 6.728
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "cold",
+          "samples": 3,
+          "p50": 2.427,
+          "p95": 2.718,
+          "min": 2.32,
+          "max": 2.75
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 36.019,
+          "p95": 41.819,
+          "min": 29.573,
+          "max": 42.464
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "cold",
+          "samples": 3,
+          "p50": 0.275,
+          "p95": 2.903,
+          "min": 0.027,
+          "max": 3.195
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "warm",
+          "samples": 11,
+          "p50": 0.029,
+          "p95": 820.509,
+          "min": 0.0,
+          "max": 848.911
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 4.135,
+          "p95": 4.135,
+          "min": 4.135,
+          "max": 4.135
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "warm",
+          "samples": 92,
+          "p50": 1.366,
+          "p95": 2.854,
+          "min": 0.943,
+          "max": 4.509
+        },
+        {
+          "code": "CAPTURE_SOURCE_CLOCK_AHEAD",
+          "phase": "unknown",
+          "samples": 5,
+          "p50": 0.465,
+          "p95": 1.505,
+          "min": 0.038,
+          "max": 1.596
+        },
+        {
+          "code": "CAPTURE_SOURCE_STARTUP",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 291.537,
+          "p95": 291.537,
+          "min": 291.537,
+          "max": 291.537
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 9.862,
+          "p95": 9.862,
+          "min": 9.862,
+          "max": 9.862
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "warm",
+          "samples": 15,
+          "p50": 0.008,
+          "p95": 0.03,
+          "min": 0.007,
+          "max": 0.053
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.12,
+          "p95": 0.12,
+          "min": 0.12,
+          "max": 0.12
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "warm",
+          "samples": 92,
+          "p50": 0.051,
+          "p95": 0.15,
+          "min": 0.014,
+          "max": 0.302
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2160.304,
+          "p95": 2160.304,
+          "min": 2160.304,
+          "max": 2160.304
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "warm",
+          "samples": 14,
+          "p50": 816.565,
+          "p95": 908.942,
+          "min": 695.897,
+          "max": 990.937
+        },
+        {
+          "code": "WINDOWS_OCR_SUPPORT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      ],
+      "requestDurationByCode": [],
+      "validOverlayAge": [],
+      "queueMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_FAILED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_REPLACED",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 5
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "droppedCounterMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_FAILED",
+          "maximumObserved": 7
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 7
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 7
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_REPLACED",
+          "maximumObserved": 7
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 7
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "CAPTURE_OK",
+          "maximumObserved": 705
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 72
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 72
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "eventCounts": {
+        "API_CLIENT_QUEUE_WAIT": 2,
+        "API_RATE_WAIT": 2,
+        "API_REQUEST_FAILED": 2,
+        "API_REQUEST_SENT": 2,
+        "BLOCKS_LOCATED": 15,
+        "BLOCK_QUEUED": 14,
+        "BLOCK_QUEUE_REPLACED": 4,
+        "BLOCK_QUEUE_WAIT": 5,
+        "BLOCK_REQUEST_STALE": 3,
+        "BLOCK_STABLE": 14,
+        "BLOCK_TRANSLATING": 2,
+        "CAPTURE_BACKLOG": 4,
+        "CAPTURE_DIAGNOSTIC_START": 1,
+        "CAPTURE_DIAGNOSTIC_STOP": 1,
+        "CAPTURE_OK": 93,
+        "CAPTURE_SOURCE_CLOCK_AHEAD": 5,
+        "CAPTURE_SOURCE_STARTUP": 1,
+        "FRAME_DEQUEUE": 16,
+        "FRAME_WAIT": 93,
+        "OCR_OK": 15,
+        "OCR_START": 16,
+        "WINDOWS_OCR_SUPPORT": 1
+      },
+      "fallbackEventCounts": {
+        "package_identity_required": 97
+      },
+      "unmeasured": {
+        "completeClipSentenceRecognitionAccuracy": null,
+        "translationAccuracy": null,
+        "gameFrameTimeMilliseconds": null,
+        "missedSentences": null,
+        "expiredTranslations": null
+      },
+      "requestOutcomes": {
+        "sent": 2,
+        "validComplete": 0,
+        "cancelledAtRunEnd": 2,
+        "validOverlayEvents": 0
+      }
+    },
+    "liveMenuGdi": {
+      "backend": "Gdi",
+      "diagnosticRunCompleted": true,
+      "elapsedMilliseconds": 15080.434,
+      "translateEnabled": true,
+      "fastMode": true,
+      "ocrMode": "Enhanced",
+      "sampleIntervalMilliseconds": 150,
+      "packageIdentity": false,
+      "service": "zhipu",
+      "model": "glm-4.5-flash",
+      "durationByCode": [
+        {
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 5,
+          "p50": 0.006,
+          "p95": 0.012,
+          "min": 0.002,
+          "max": 0.013
+        },
+        {
+          "code": "API_RATE_WAIT",
+          "phase": "warm",
+          "samples": 5,
+          "p50": 0.052,
+          "p95": 408.092,
+          "min": 0.001,
+          "max": 408.139
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 3463.265,
+          "p95": 6015.504,
+          "min": 917.351,
+          "max": 6054.288
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 5.659,
+          "p95": 5.659,
+          "min": 5.659,
+          "max": 5.659
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "warm",
+          "samples": 15,
+          "p50": 0.114,
+          "p95": 2.869,
+          "min": 0.073,
+          "max": 7.337
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "cold",
+          "samples": 3,
+          "p50": 2.687,
+          "p95": 2.863,
+          "min": 2.586,
+          "max": 2.883
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 9,
+          "p50": 30.448,
+          "p95": 5790.276,
+          "min": 0.741,
+          "max": 6094.762
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "cold",
+          "samples": 3,
+          "p50": 0.292,
+          "p95": 2.867,
+          "min": 0.028,
+          "max": 3.154
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "warm",
+          "samples": 9,
+          "p50": 0.012,
+          "p95": 753.29,
+          "min": 0.0,
+          "max": 761.313
+        },
+        {
+          "code": "BLOCK_TRANSLATED",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 1228.191,
+          "p95": 5472.404,
+          "min": 0.058,
+          "max": 6204.234
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 14.043,
+          "p95": 14.043,
+          "min": 14.043,
+          "max": 14.043
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "warm",
+          "samples": 93,
+          "p50": 12.373,
+          "p95": 16.95,
+          "min": 7.96,
+          "max": 25.782
+        },
+        {
+          "code": "CAPTURE_SOURCE_STARTUP",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 13.525,
+          "p95": 13.525,
+          "min": 13.525,
+          "max": 13.525
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 19.605,
+          "p95": 19.605,
+          "min": 19.605,
+          "max": 19.605
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "warm",
+          "samples": 16,
+          "p50": 0.008,
+          "p95": 0.029,
+          "min": 0.006,
+          "max": 0.052
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "warm",
+          "samples": 93,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "HTTP_200",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 3463.159,
+          "p95": 6012.87,
+          "min": 917.296,
+          "max": 6051.214
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2073.958,
+          "p95": 2073.958,
+          "min": 2073.958,
+          "max": 2073.958
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "warm",
+          "samples": 15,
+          "p50": 747.838,
+          "p95": 1057.197,
+          "min": 691.471,
+          "max": 1160.136
+        },
+        {
+          "code": "WINDOWS_OCR_SUPPORT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      ],
+      "requestDurationByCode": [
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 6054.288,
+          "p95": 6054.288,
+          "min": 6054.288,
+          "max": 6054.288
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "warm",
+          "samples": 3,
+          "p50": 1130.804,
+          "p95": 5329.233,
+          "min": 917.351,
+          "max": 5795.725
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 6051.214,
+          "p95": 6051.214,
+          "min": 6051.214,
+          "max": 6051.214
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "warm",
+          "samples": 3,
+          "p50": 1130.729,
+          "p95": 5329.104,
+          "min": 917.296,
+          "max": 5795.59
+        }
+      ],
+      "validOverlayAge": [
+        {
+          "phase": "warm",
+          "samples": 4,
+          "p50": 2021.763,
+          "p95": 6336.677,
+          "min": 1657.628,
+          "max": 7081.108
+        }
+      ],
+      "queueMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_FAILED",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "droppedCounterMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_FAILED",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "CAPTURE_OK",
+          "maximumObserved": 75
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 75
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 75
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 6
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "eventCounts": {
+        "API_CLIENT_QUEUE_WAIT": 5,
+        "API_RATE_WAIT": 5,
+        "API_REQUEST_COMPLETE": 4,
+        "API_REQUEST_FAILED": 1,
+        "API_REQUEST_SENT": 5,
+        "BLOCKS_LOCATED": 16,
+        "BLOCK_QUEUED": 12,
+        "BLOCK_QUEUE_WAIT": 12,
+        "BLOCK_REQUEST_STALE": 6,
+        "BLOCK_RESULT_STALE": 1,
+        "BLOCK_STABLE": 12,
+        "BLOCK_TRANSLATED": 4,
+        "BLOCK_TRANSLATING": 6,
+        "CAPTURE_BACKLOG": 4,
+        "CAPTURE_DIAGNOSTIC_START": 1,
+        "CAPTURE_DIAGNOSTIC_STOP": 1,
+        "CAPTURE_OK": 94,
+        "CAPTURE_SOURCE_STARTUP": 1,
+        "FRAME_DEQUEUE": 17,
+        "FRAME_WAIT": 94,
+        "HTTP_200": 4,
+        "OCR_OK": 16,
+        "OCR_START": 17,
+        "OVERLAY_VISIBLE": 4,
+        "TRANSLATION_CACHE": 1,
+        "WINDOWS_OCR_SUPPORT": 1
+      },
+      "fallbackEventCounts": {
+        "package_identity_required": 132
+      },
+      "unmeasured": {
+        "completeClipSentenceRecognitionAccuracy": null,
+        "translationAccuracy": null,
+        "gameFrameTimeMilliseconds": null,
+        "missedSentences": null,
+        "expiredTranslations": null
+      },
+      "requestOutcomes": {
+        "sent": 5,
+        "validComplete": 4,
+        "cancelledAtRunEnd": 1,
+        "validOverlayEvents": 4,
+        "validOverlayIncludesTranslationCache": 1,
+        "lateResultsRejected": 1
+      }
+    }
+  },
+  "limitations": [
+    "Scene is a real game menu, not subtitles, task dialogue or cutscenes. No short-lived subtitle deadline conclusion.",
+    "Backend runs were sequential and small; network and OCR revisions differ. Response outcome differences are not caused by a backend on this evidence.",
+    "Only successful complete requests are in request duration distributions. Errors and run-end cancellations remain explicit censored outcomes, never zero latency.",
+    "WGC recorded five CAPTURE_SOURCE_CLOCK_AHEAD warnings; affected source-frame ages require review. GDI source age starts at acquisition, not compositor presentation.",
+    "Dropped counters combine specific application queues/coalescing paths; they are not missing subtitle counts or compositor-internal loss.",
+    "OVERLAY_VISIBLE records WPF render callback and filters clipped/hidden/obsolete blocks, not physical screen presentation.",
+    "Pre-fix accuracy remains under sampledAccuracyBeforeGeometryFix; post-fix accuracy is separate. Initial game replay ocrQuality actually contained spatial output, corrected by dedicated evaluation.",
+    "No complete timed dialogue annotation/display video, no PresentMon and no translator-off game baseline: missed/expired/translation accuracy/game frame time remain null.",
+    "Sample counts are small; a single cold sample has identical p50/p95 by definition. No performance target is declared achieved.",
+    "Post-fix API completion and effective overlay counts differ: recorded replay completed four requests but rejected all four late results; three later cache hits produced effective overlays.",
+    "Post-fix effective overlay age samples include cache hits and correspond to the current block revision, not manually verified first appearance of a whole sentence.",
+    "OVERLAY_VISIBLE DurationMilliseconds now measures accepted-translation to WPF render callback; end-to-end source age remains FrameAgeMilliseconds.",
+    "Animated background inside the ROI still prevents exact pixel OCR cache hits; no subtitle-priority scheduler or semantic classification was introduced.",
+    "Remaining OCR errors include spacing, quotation marks and background interference. No complete frame exact match in the small annotated sample.",
+    "Five WGC source-clock-ahead flags also remain in the post-fix run; raw timestamp information is retained and non-negative elapsed values are floored rather than claiming a verified clock cause."
+  ],
+  "assessment": "partial validation; short cutscene not validated",
+  "latestResults": "postFixRuns; original runs remain preserved as pre-fix evidence",
+  "postFixRuns": {
+    "recordedMenuReplay": {
+      "backend": "Replay",
+      "diagnosticRunCompleted": true,
+      "elapsedMilliseconds": 12546.1147,
+      "translateEnabled": true,
+      "fastMode": true,
+      "ocrMode": "Enhanced",
+      "sampleIntervalMilliseconds": 150,
+      "packageIdentity": false,
+      "service": "zhipu",
+      "model": "glm-4.5-flash",
+      "durationByCode": [
+        {
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 0.008,
+          "p95": 0.009,
+          "min": 0.006,
+          "max": 0.009
+        },
+        {
+          "code": "API_RATE_WAIT",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 0.031,
+          "p95": 345.416,
+          "min": 0.002,
+          "max": 406.361
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 2295.14,
+          "p95": 3912.889,
+          "min": 752.988,
+          "max": 3931.374
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 5.919,
+          "p95": 5.919,
+          "min": 5.919,
+          "max": 5.919
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "warm",
+          "samples": 11,
+          "p50": 0.143,
+          "p95": 3.621,
+          "min": 0.081,
+          "max": 5.924
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2.793,
+          "p95": 2.793,
+          "min": 2.793,
+          "max": 2.793
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 9,
+          "p50": 29.833,
+          "p95": 2348.624,
+          "min": 0.855,
+          "max": 3056.467
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 3.837,
+          "p95": 3.837,
+          "min": 3.837,
+          "max": 3.837
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "warm",
+          "samples": 9,
+          "p50": 0.027,
+          "p95": 770.167,
+          "min": 0.001,
+          "max": 787.64
+        },
+        {
+          "code": "BLOCK_TRANSLATED",
+          "phase": "warm",
+          "samples": 3,
+          "p50": 0.17,
+          "p95": 0.29,
+          "min": 0.027,
+          "max": 0.303
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 626.038,
+          "p95": 626.038,
+          "min": 626.038,
+          "max": 626.038
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "warm",
+          "samples": 74,
+          "p50": 4.435,
+          "p95": 6.027,
+          "min": 0.004,
+          "max": 7.463
+        },
+        {
+          "code": "CAPTURE_SOURCE_STARTUP",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 11.428,
+          "p95": 11.428,
+          "min": 11.428,
+          "max": 11.428
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 632.477,
+          "p95": 632.477,
+          "min": 632.477,
+          "max": 632.477
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "warm",
+          "samples": 12,
+          "p50": 0.008,
+          "p95": 0.035,
+          "min": 0.006,
+          "max": 0.051
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "warm",
+          "samples": 74,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "HTTP_200",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 2293.569,
+          "p95": 3912.211,
+          "min": 752.931,
+          "max": 3931.1
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2403.089,
+          "p95": 2403.089,
+          "min": 2403.089,
+          "max": 2403.089
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "warm",
+          "samples": 11,
+          "p50": 743.575,
+          "p95": 989.524,
+          "min": 690.288,
+          "max": 997.826
+        },
+        {
+          "code": "OVERLAY_VISIBLE",
+          "phase": "warm",
+          "samples": 3,
+          "p50": 2.954,
+          "p95": 3.279,
+          "min": 1.185,
+          "max": 3.315
+        },
+        {
+          "code": "WINDOWS_OCR_SUPPORT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      ],
+      "requestDurationByCode": [
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 3808.146,
+          "p95": 3808.146,
+          "min": 3808.146,
+          "max": 3808.146
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "warm",
+          "samples": 3,
+          "p50": 782.134,
+          "p95": 3616.45,
+          "min": 752.988,
+          "max": 3931.374
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 3805.168,
+          "p95": 3805.168,
+          "min": 3805.168,
+          "max": 3805.168
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "warm",
+          "samples": 3,
+          "p50": 781.969,
+          "p95": 3616.187,
+          "min": 752.931,
+          "max": 3931.1
+        }
+      ],
+      "validOverlayAge": [
+        {
+          "phase": "warm",
+          "samples": 3,
+          "p50": 940.077,
+          "p95": 1506.469,
+          "min": 899.757,
+          "max": 1569.402
+        }
+      ],
+      "queueMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "droppedCounterMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "CAPTURE_OK",
+          "maximumObserved": 60
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 60
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 60
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 3
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "eventCounts": {
+        "API_CLIENT_QUEUE_WAIT": 4,
+        "API_RATE_WAIT": 4,
+        "API_REQUEST_COMPLETE": 4,
+        "API_REQUEST_SENT": 4,
+        "BLOCKS_LOCATED": 12,
+        "BLOCK_QUEUED": 10,
+        "BLOCK_QUEUE_WAIT": 10,
+        "BLOCK_REQUEST_STALE": 3,
+        "BLOCK_RESULT_STALE": 4,
+        "BLOCK_STABLE": 10,
+        "BLOCK_TRANSLATED": 3,
+        "BLOCK_TRANSLATING": 7,
+        "CAPTURE_BACKLOG": 4,
+        "CAPTURE_DIAGNOSTIC_START": 1,
+        "CAPTURE_DIAGNOSTIC_STOP": 1,
+        "CAPTURE_OK": 75,
+        "CAPTURE_SOURCE_STARTUP": 1,
+        "FRAME_DEQUEUE": 13,
+        "FRAME_WAIT": 75,
+        "HTTP_200": 4,
+        "OCR_OK": 12,
+        "OCR_START": 13,
+        "OVERLAY_VISIBLE": 3,
+        "TRANSLATION_CACHE": 3,
+        "WINDOWS_OCR_SUPPORT": 1
+      },
+      "fallbackEventCounts": {
+        "package_identity_required": 111
+      },
+      "requestOutcomes": {
+        "sent": 4,
+        "validComplete": 4,
+        "validOverlayEvents": 3,
+        "validOverlayIncludesTranslationCache": 3,
+        "lateResultsRejected": 4,
+        "emptyContentErrorAfterHttp200": 0,
+        "cancelledAtRunEnd": 0
+      },
+      "unmeasured": {
+        "completeClipSentenceRecognitionAccuracy": null,
+        "translationAccuracy": null,
+        "gameFrameTimeMilliseconds": null,
+        "missedSentences": null,
+        "expiredTranslations": null
+      }
+    },
+    "liveMenuWgc": {
+      "backend": "Wgc",
+      "diagnosticRunCompleted": true,
+      "elapsedMilliseconds": 15071.9877,
+      "translateEnabled": true,
+      "fastMode": true,
+      "ocrMode": "Enhanced",
+      "sampleIntervalMilliseconds": 150,
+      "packageIdentity": false,
+      "service": "zhipu",
+      "model": "glm-4.5-flash",
+      "durationByCode": [
+        {
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 0.006,
+          "p95": 0.045,
+          "min": 0.003,
+          "max": 0.052
+        },
+        {
+          "code": "API_RATE_WAIT",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 0.031,
+          "p95": 333.965,
+          "min": 0.002,
+          "max": 392.89
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 2443.055,
+          "p95": 4176.486,
+          "min": 784.481,
+          "max": 4233.451
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 5.821,
+          "p95": 5.821,
+          "min": 5.821,
+          "max": 5.821
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "warm",
+          "samples": 14,
+          "p50": 0.116,
+          "p95": 3.111,
+          "min": 0.084,
+          "max": 7.681
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 3.015,
+          "p95": 3.015,
+          "min": 3.015,
+          "max": 3.015
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 9,
+          "p50": 1.446,
+          "p95": 1805.293,
+          "min": 0.6,
+          "max": 2772.927
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 3.286,
+          "p95": 3.286,
+          "min": 3.286,
+          "max": 3.286
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "warm",
+          "samples": 9,
+          "p50": 0.031,
+          "p95": 998.846,
+          "min": 0.003,
+          "max": 1126.688
+        },
+        {
+          "code": "BLOCK_TRANSLATED",
+          "phase": "warm",
+          "samples": 7,
+          "p50": 0.092,
+          "p95": 3016.294,
+          "min": 0.037,
+          "max": 3866.436
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 4.093,
+          "p95": 4.093,
+          "min": 4.093,
+          "max": 4.093
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "warm",
+          "samples": 92,
+          "p50": 1.446,
+          "p95": 2.852,
+          "min": 0.948,
+          "max": 3.721
+        },
+        {
+          "code": "CAPTURE_SOURCE_CLOCK_AHEAD",
+          "phase": "unknown",
+          "samples": 5,
+          "p50": 0.911,
+          "p95": 1.148,
+          "min": 0.103,
+          "max": 1.19
+        },
+        {
+          "code": "CAPTURE_SOURCE_STARTUP",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 296.499,
+          "p95": 296.499,
+          "min": 296.499,
+          "max": 296.499
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 9.753,
+          "p95": 9.753,
+          "min": 9.753,
+          "max": 9.753
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "warm",
+          "samples": 15,
+          "p50": 0.008,
+          "p95": 0.034,
+          "min": 0.006,
+          "max": 0.054
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.104,
+          "p95": 0.104,
+          "min": 0.104,
+          "max": 0.104
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "warm",
+          "samples": 92,
+          "p50": 0.066,
+          "p95": 0.208,
+          "min": 0.015,
+          "max": 1.255
+        },
+        {
+          "code": "HTTP_200",
+          "phase": "warm",
+          "samples": 4,
+          "p50": 2441.386,
+          "p95": 4175.878,
+          "min": 784.413,
+          "max": 4233.312
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2039.817,
+          "p95": 2039.817,
+          "min": 2039.817,
+          "max": 2039.817
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "warm",
+          "samples": 14,
+          "p50": 819.565,
+          "p95": 1081.772,
+          "min": 704.615,
+          "max": 1125.655
+        },
+        {
+          "code": "OVERLAY_VISIBLE",
+          "phase": "warm",
+          "samples": 7,
+          "p50": 2.457,
+          "p95": 4.148,
+          "min": 1.296,
+          "max": 4.254
+        },
+        {
+          "code": "WINDOWS_OCR_SUPPORT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      ],
+      "requestDurationByCode": [
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 3853.683,
+          "p95": 3853.683,
+          "min": 3853.683,
+          "max": 3853.683
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "warm",
+          "samples": 3,
+          "p50": 1032.428,
+          "p95": 3913.349,
+          "min": 784.481,
+          "max": 4233.451
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 3850.42,
+          "p95": 3850.42,
+          "min": 3850.42,
+          "max": 3850.42
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "warm",
+          "samples": 3,
+          "p50": 1032.352,
+          "p95": 3913.216,
+          "min": 784.413,
+          "max": 4233.312
+        }
+      ],
+      "validOverlayAge": [
+        {
+          "phase": "warm",
+          "samples": 7,
+          "p50": 1688.787,
+          "p95": 4184.298,
+          "min": 737.673,
+          "max": 4810.625
+        }
+      ],
+      "queueMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "droppedCounterMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "CAPTURE_OK",
+          "maximumObserved": 700
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 73
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 73
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "eventCounts": {
+        "API_CLIENT_QUEUE_WAIT": 4,
+        "API_RATE_WAIT": 4,
+        "API_REQUEST_COMPLETE": 4,
+        "API_REQUEST_SENT": 4,
+        "BLOCKS_LOCATED": 15,
+        "BLOCK_QUEUED": 10,
+        "BLOCK_QUEUE_WAIT": 10,
+        "BLOCK_REQUEST_STALE": 2,
+        "BLOCK_RESULT_STALE": 1,
+        "BLOCK_STABLE": 10,
+        "BLOCK_TRANSLATED": 7,
+        "BLOCK_TRANSLATING": 8,
+        "CAPTURE_BACKLOG": 4,
+        "CAPTURE_DIAGNOSTIC_START": 1,
+        "CAPTURE_DIAGNOSTIC_STOP": 1,
+        "CAPTURE_OK": 93,
+        "CAPTURE_SOURCE_CLOCK_AHEAD": 5,
+        "CAPTURE_SOURCE_STARTUP": 1,
+        "FRAME_DEQUEUE": 16,
+        "FRAME_WAIT": 93,
+        "HTTP_200": 4,
+        "OCR_OK": 15,
+        "OCR_START": 16,
+        "OVERLAY_VISIBLE": 7,
+        "TRANSLATION_CACHE": 4,
+        "WINDOWS_OCR_SUPPORT": 1
+      },
+      "fallbackEventCounts": {
+        "package_identity_required": 126
+      },
+      "requestOutcomes": {
+        "sent": 4,
+        "validComplete": 4,
+        "validOverlayEvents": 7,
+        "validOverlayIncludesTranslationCache": 4,
+        "lateResultsRejected": 1,
+        "emptyContentErrorAfterHttp200": 0,
+        "cancelledAtRunEnd": 0
+      },
+      "unmeasured": {
+        "completeClipSentenceRecognitionAccuracy": null,
+        "translationAccuracy": null,
+        "gameFrameTimeMilliseconds": null,
+        "missedSentences": null,
+        "expiredTranslations": null
+      },
+      "sourceClockAheadMilliseconds": {
+        "samples": 5,
+        "min": 0.1031,
+        "max": 1.1904,
+        "p50": 0.911,
+        "p95": 1.148,
+        "causeVerified": false,
+        "rawSourceTimestampPreserved": true,
+        "nonNegativeAgeFlooredAtZero": true
+      }
+    },
+    "liveMenuGdi": {
+      "backend": "Gdi",
+      "diagnosticRunCompleted": true,
+      "elapsedMilliseconds": 15079.6538,
+      "translateEnabled": true,
+      "fastMode": true,
+      "ocrMode": "Enhanced",
+      "sampleIntervalMilliseconds": 150,
+      "packageIdentity": false,
+      "service": "zhipu",
+      "model": "glm-4.5-flash",
+      "durationByCode": [
+        {
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 0.008,
+          "p95": 0.01,
+          "min": 0.006,
+          "max": 0.011
+        },
+        {
+          "code": "API_RATE_WAIT",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 0.026,
+          "p95": 0.047,
+          "min": 0.003,
+          "max": 0.049
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 2332.372,
+          "p95": 3755.463,
+          "min": 751.161,
+          "max": 3913.584
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 6.38,
+          "p95": 6.38,
+          "min": 6.38,
+          "max": 6.38
+        },
+        {
+          "code": "BLOCKS_LOCATED",
+          "phase": "warm",
+          "samples": 14,
+          "p50": 0.127,
+          "p95": 2.912,
+          "min": 0.075,
+          "max": 6.739
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "cold",
+          "samples": 2,
+          "p50": 2.79,
+          "p95": 2.94,
+          "min": 2.623,
+          "max": 2.956
+        },
+        {
+          "code": "BLOCK_QUEUE_WAIT",
+          "phase": "warm",
+          "samples": 5,
+          "p50": 2.468,
+          "p95": 1614.53,
+          "min": 1.214,
+          "max": 2011.317
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "cold",
+          "samples": 2,
+          "p50": 1.883,
+          "p95": 3.31,
+          "min": 0.298,
+          "max": 3.469
+        },
+        {
+          "code": "BLOCK_STABLE",
+          "phase": "warm",
+          "samples": 5,
+          "p50": 0.027,
+          "p95": 764.722,
+          "min": 0.007,
+          "max": 955.894
+        },
+        {
+          "code": "BLOCK_TRANSLATED",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 376.023,
+          "p95": 714.248,
+          "min": 0.217,
+          "max": 751.829
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 15.456,
+          "p95": 15.456,
+          "min": 15.456,
+          "max": 15.456
+        },
+        {
+          "code": "CAPTURE_OK",
+          "phase": "warm",
+          "samples": 93,
+          "p50": 12.68,
+          "p95": 18.866,
+          "min": 8.02,
+          "max": 24.751
+        },
+        {
+          "code": "CAPTURE_SOURCE_STARTUP",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 13.254,
+          "p95": 13.254,
+          "min": 13.254,
+          "max": 13.254
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 21.467,
+          "p95": 21.467,
+          "min": 21.467,
+          "max": 21.467
+        },
+        {
+          "code": "FRAME_DEQUEUE",
+          "phase": "warm",
+          "samples": 15,
+          "p50": 0.008,
+          "p95": 0.038,
+          "min": 0.007,
+          "max": 0.06
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "FRAME_WAIT",
+          "phase": "warm",
+          "samples": 93,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        {
+          "code": "HTTP_200",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 2330.935,
+          "p95": 3752.842,
+          "min": 751.038,
+          "max": 3910.831
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 2336.717,
+          "p95": 2336.717,
+          "min": 2336.717,
+          "max": 2336.717
+        },
+        {
+          "code": "OCR_OK",
+          "phase": "warm",
+          "samples": 14,
+          "p50": 824.301,
+          "p95": 986.217,
+          "min": 682.444,
+          "max": 993.198
+        },
+        {
+          "code": "OVERLAY_VISIBLE",
+          "phase": "warm",
+          "samples": 2,
+          "p50": 3.112,
+          "p95": 3.232,
+          "min": 2.978,
+          "max": 3.246
+        },
+        {
+          "code": "WINDOWS_OCR_SUPPORT",
+          "phase": "cold",
+          "samples": 1,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      ],
+      "requestDurationByCode": [
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 3913.584,
+          "p95": 3913.584,
+          "min": 3913.584,
+          "max": 3913.584
+        },
+        {
+          "code": "API_REQUEST_COMPLETE",
+          "requestPhase": "warm",
+          "samples": 1,
+          "p50": 751.161,
+          "p95": 751.161,
+          "min": 751.161,
+          "max": 751.161
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "cold",
+          "samples": 1,
+          "p50": 3910.831,
+          "p95": 3910.831,
+          "min": 3910.831,
+          "max": 3910.831
+        },
+        {
+          "code": "HTTP_200",
+          "requestPhase": "warm",
+          "samples": 1,
+          "p50": 751.038,
+          "p95": 751.038,
+          "min": 751.038,
+          "max": 751.038
+        }
+      ],
+      "validOverlayAge": [
+        {
+          "phase": "warm",
+          "samples": 2,
+          "p50": 1349.495,
+          "p95": 1804.229,
+          "min": 844.234,
+          "max": 1854.755
+        }
+      ],
+      "queueMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 1
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 0
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "droppedCounterMaxima": [
+        {
+          "area": 0,
+          "code": "API_CLIENT_QUEUE_WAIT",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "API_RATE_WAIT",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_COMPLETE",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "API_REQUEST_SENT",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCKS_LOCATED",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUED",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_QUEUE_WAIT",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_REQUEST_STALE",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_RESULT_STALE",
+          "maximumObserved": 2
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_STABLE",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATED",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "BLOCK_TRANSLATING",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "CAPTURE_OK",
+          "maximumObserved": 76
+        },
+        {
+          "area": 0,
+          "code": "FRAME_DEQUEUE",
+          "maximumObserved": 75
+        },
+        {
+          "area": 0,
+          "code": "HTTP_200",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "OCR_OK",
+          "maximumObserved": 75
+        },
+        {
+          "area": 0,
+          "code": "TRANSLATION_CACHE",
+          "maximumObserved": 4
+        },
+        {
+          "area": 0,
+          "code": "WINDOWS_OCR_SUPPORT",
+          "maximumObserved": 0
+        }
+      ],
+      "eventCounts": {
+        "API_CLIENT_QUEUE_WAIT": 2,
+        "API_RATE_WAIT": 2,
+        "API_REQUEST_COMPLETE": 2,
+        "API_REQUEST_SENT": 2,
+        "BLOCKS_LOCATED": 15,
+        "BLOCK_QUEUED": 7,
+        "BLOCK_QUEUE_WAIT": 7,
+        "BLOCK_REQUEST_STALE": 4,
+        "BLOCK_RESULT_STALE": 1,
+        "BLOCK_STABLE": 7,
+        "BLOCK_TRANSLATED": 2,
+        "BLOCK_TRANSLATING": 4,
+        "CAPTURE_BACKLOG": 4,
+        "CAPTURE_DIAGNOSTIC_START": 1,
+        "CAPTURE_DIAGNOSTIC_STOP": 1,
+        "CAPTURE_OK": 94,
+        "CAPTURE_SOURCE_STARTUP": 1,
+        "FRAME_DEQUEUE": 16,
+        "FRAME_WAIT": 94,
+        "HTTP_200": 2,
+        "OCR_OK": 15,
+        "OCR_START": 16,
+        "OVERLAY_VISIBLE": 2,
+        "TRANSLATION_CACHE": 1,
+        "WINDOWS_OCR_SUPPORT": 1
+      },
+      "fallbackEventCounts": {
+        "package_identity_required": 92
+      },
+      "requestOutcomes": {
+        "sent": 2,
+        "validComplete": 2,
+        "validOverlayEvents": 2,
+        "validOverlayIncludesTranslationCache": 1,
+        "lateResultsRejected": 1,
+        "emptyContentErrorAfterHttp200": 0,
+        "cancelledAtRunEnd": 0
+      },
+      "unmeasured": {
+        "completeClipSentenceRecognitionAccuracy": null,
+        "translationAccuracy": null,
+        "gameFrameTimeMilliseconds": null,
+        "missedSentences": null,
+        "expiredTranslations": null
+      }
+    }
+  },
+  "sampledAccuracyAfterGeometryFix": {
+    "dedicatedEvaluation": {
+      "rawOcr": {
+        "annotatedFramesRead": 12,
+        "referenceCharacters": 612,
+        "characterErrors": 27,
+        "sampledFrameCer": 0.04411764705882353,
+        "exactFrames": 0,
+        "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; repeated reads of a frame counted once"
+      },
+      "spatialOutput": {
+        "annotatedFramesRead": 12,
+        "referenceCharacters": 612,
+        "characterErrors": 27,
+        "sampledFrameCer": 0.04411764705882353,
+        "exactFrames": 0,
+        "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; repeated reads of a frame counted once"
+      }
+    },
+    "translationEnabledReplay": {
+      "rawOcr": {
+        "annotatedFramesRead": 12,
+        "referenceCharacters": 612,
+        "characterErrors": 32,
+        "sampledFrameCer": 0.05228758169934641,
+        "exactFrames": 0,
+        "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; repeated reads of a frame counted once"
+      },
+      "spatialOutput": {
+        "annotatedFramesRead": 12,
+        "referenceCharacters": 612,
+        "characterErrors": 32,
+        "sampledFrameCer": 0.05228758169934641,
+        "exactFrames": 0,
+        "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; repeated reads of a frame counted once"
+      }
+    },
+    "sameSingleFrameGeometryChecks": {
+      "horizontalDimensions": true,
+      "quarterTurnSamePhysicalBounds": true,
+      "diagonalProjection": true,
+      "realDetectionOrderingFixed": true
+    },
+    "actualDetectedAnglesDegrees": [
+      90,
+      90,
+      45,
+      0.43405068,
+      1.4688008,
+      89.53038,
+      1.5481577,
+      85.91438,
+      4.3987055
+    ],
+    "geometryCause": "RotatedRect Size width/height are local rotated-axis dimensions; axis-aligned layout now uses the four corner extrema.",
+    "scope": "The source is the same complete 74-frame recording; real-time runs consumed different sampled frames. Raw CER differences are not attributed to the geometry fix. Same-frame geometry checks isolate coordinate behavior."
+  }
+}

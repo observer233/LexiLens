@@ -68,6 +68,7 @@ public sealed class DiagnosticJournal(string directory)
         return JsonSerializer.Serialize(new
         {
             version, exportedAt = DateTimeOffset.Now, operatingSystem = Environment.OSVersion.VersionString,
+            stopwatchFrequency = System.Diagnostics.Stopwatch.Frequency,
             architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),
             provider = settings.Provider.ToString(), service = settings.Provider == TranslationProvider.Cloud ? settings.CloudServiceId : settings.Provider.ToString(),
             model = settings.Provider == TranslationProvider.Cloud ? profile.Model : settings.Provider == TranslationProvider.Ollama ? settings.OllamaModel : "MyMemory",

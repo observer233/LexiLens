@@ -14,7 +14,12 @@ public sealed record TextBounds(double X, double Y, double Width, double Height)
 }
 
 public sealed record RecognizedBlock(string Text, TextBounds Bounds);
-public sealed record SpatialBlock(int Id, string Source, TextBounds Bounds, string? Translation = null, string? Error = null);
+public sealed record SpatialBlock(int Id, string Source, TextBounds Bounds, string? Translation = null, string? Error = null)
+{
+    public FrameTiming? Timing { get; init; }
+    public int Revision { get; init; }
+    public long ReadyTimestamp { get; init; }
+}
 public interface IBlockTextSource : ITextSource
 {
     Task<IReadOnlyList<RecognizedBlock>> ReadBlocksAsync(CancellationToken ct);

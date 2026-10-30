@@ -13,7 +13,7 @@ namespace LexiLens.App.Views;
 internal sealed class SpatialOverlayWindow : Window
 {
     private readonly Canvas _canvas = new() { ClipToBounds = true };
-    private readonly CaptureRegion _region;
+    private CaptureRegion _region;
     private NativeMethods.Rect _monitor;
     private AppSettings _settings;
     private IReadOnlyList<SpatialBlock> _blocks = [];
@@ -21,6 +21,12 @@ internal sealed class SpatialOverlayWindow : Window
     internal bool CaptureExcluded { get; private set; }
     internal int BlockCount => _blocks.Count;
     internal int RenderedCount => _canvas.Children.Count;
+    internal Action<PipelineEvent>? Progress { get; set; }
+    internal Func<SpatialBlock, bool>? IsCurrentBlock { get; set; }
+    internal void ResetTelemetry() => _displayed.Clear();
+    private readonly HashSet<(int Id, int Revision)> _displayed = [];
+    private bool _renderPending;
+    private IReadOnlyList<SpatialBlock> _rendered = [];
     internal event Action? ToggleRequested;
     internal event Action? PickRequested;
     internal event Action? ClearRequested;
@@ -35,25 +41,65 @@ internal sealed class SpatialOverlayWindow : Window
         SourceInitialized += (_, _) => CaptureExcluded = NativeMethods.ExcludeFromCapture(this);
         Loaded += (_, _) =>
         {
-            _monitor = NativeMethods.Monitors().First(m => region.X >= m.Left && region.Y >= m.Top && region.X + region.Width <= m.Right && region.Y + region.Height <= m.Bottom);
-            NativeMethods.SetWindowPos(new WindowInteropHelper(this).Handle, -1, _monitor.Left, _monitor.Top, _monitor.Right - _monitor.Left, _monitor.Bottom - _monitor.Top, 0x10);
+            UpdateMonitor();
             SetLocked(true); Draw();
         };
         SizeChanged += (_, _) => Draw();
+        IsVisibleChanged += (_, _) => { if (IsVisible) Draw(); };
+        DpiChanged += (_, _) => { UpdateMonitor(); Draw(); };
+        Closed += (_, _) => CompositionTarget.Rendering -= OnRendering;
     }
 
     internal void ApplySettings(AppSettings settings) { _settings = settings; Draw(); }
     internal void SetLocked(bool locked) { IsLocked = locked; NativeMethods.SetClickThrough(this, locked); Draw(); }
     internal void SetBlocks(IReadOnlyList<SpatialBlock> blocks) { _blocks = blocks; Draw(); }
+    internal void SetRegion(CaptureRegion region)
+    {
+        if (region == _region) return;
+        _region = region; UpdateMonitor(); Draw();
+    }
+
+    private void UpdateMonitor()
+    {
+        var monitor = NativeMethods.Monitors().OrderByDescending(m => Math.Max(0, Math.Min(m.Right, _region.X + _region.Width) - Math.Max(m.Left, _region.X))
+            * (long)Math.Max(0, Math.Min(m.Bottom, _region.Y + _region.Height) - Math.Max(m.Top, _region.Y))).FirstOrDefault();
+        if (monitor.Right <= monitor.Left) return;
+        _monitor = monitor;
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd != 0) NativeMethods.SetWindowPos(hwnd, -1, monitor.Left, monitor.Top, monitor.Right - monitor.Left, monitor.Bottom - monitor.Top, 0x10);
+    }
+
+    private void OnRendering(object? sender, EventArgs e)
+    {
+        CompositionTarget.Rendering -= OnRendering; _renderPending = false;
+        if (!IsVisible || !IsLocked || WindowState == WindowState.Minimized) return;
+        if (IsCurrentBlock != null && _blocks.Any(b => !IsCurrentBlock(b)))
+        {
+            _blocks = _blocks.Where(IsCurrentBlock).ToArray(); Draw(); return;
+        }
+        foreach (var block in _rendered.Where(x => !string.IsNullOrWhiteSpace(x.Translation) && x.Timing != null))
+        {
+            if (!_blocks.Contains(block) || IsCurrentBlock?.Invoke(block) == false || !_displayed.Add((block.Id, block.Revision))) continue;
+            if (_displayed.Count > 1000) { _displayed.Clear(); _displayed.Add((block.Id, block.Revision)); }
+            var timing = block.Timing!;
+            Progress?.Invoke(new(PipelineStage.Overlay, PipelineState.Success, "OVERLAY_VISIBLE", "当前修订已提交 WPF 呈现（非光子延迟）", Frame: timing.Frame)
+            { CaptureTimestamp = timing.CapturedTimestamp, FrameAgeMilliseconds = timing.AgeMilliseconds, ColdStart = timing.ColdStart,
+                DurationMilliseconds = block.ReadyTimestamp > 0 ? FrameTiming.ElapsedMilliseconds(block.ReadyTimestamp) : null,
+                VerifiedTimestamp = timing.VerifiedTimestamp, FrameVerificationAgeMilliseconds = timing.VerificationAgeMilliseconds,
+                OcrEngine = timing.Engine, FallbackReason = timing.FallbackReason, BlockId = block.Id, Revision = block.Revision });
+        }
+    }
 
     private void Draw()
     {
         _canvas.Children.Clear();
+        var rendered = new List<SpatialBlock>();
         if (ActualWidth <= 0 || ActualHeight <= 0 || _monitor.Right <= _monitor.Left) return;
         var sx = ActualWidth / (_monitor.Right - _monitor.Left); var sy = ActualHeight / (_monitor.Bottom - _monitor.Top);
         var placed = new List<Rect>();
         foreach (var block in _blocks)
         {
+            if (IsCurrentBlock?.Invoke(block) == false) continue;
             var b = block.Bounds;
             if (!b.IsValid) continue;
             var original = new Rect((_region.X - _monitor.Left + b.X * _region.Width) * sx, (_region.Y - _monitor.Top + b.Y * _region.Height) * sy,
@@ -85,6 +131,11 @@ internal sealed class SpatialOverlayWindow : Window
             while (text.DesiredSize.Height > availableHeight && text.FontSize > 10)
             { text.FontSize--; text.Measure(new Size(availableWidth, double.PositiveInfinity)); }
             text.MaxHeight = availableHeight;
+            var clipped = text.DesiredSize.Height > availableHeight;
+            if (!string.IsNullOrWhiteSpace(block.Translation) && (clipped || text.FontSize < Math.Clamp(original.Height * .65, 11, _settings.FontSize)))
+                Progress?.Invoke(new(PipelineStage.Overlay, PipelineState.Warning, "OVERLAY_LAYOUT_LIMIT", clipped ? "译文超出原位区域，存在裁剪" : "译文已缩小字号以适配原位区域", Frame: block.Timing?.Frame ?? 0)
+                { BlockId = block.Id, Revision = block.Revision, CaptureTimestamp = block.Timing?.CapturedTimestamp, FrameAgeMilliseconds = block.Timing?.AgeMilliseconds });
+            if (!clipped) rendered.Add(block);
             var border = new Border
             {
                 Width = box.Width,
@@ -108,5 +159,7 @@ internal sealed class SpatialOverlayWindow : Window
             }
             Canvas.SetLeft(border, box.Left); Canvas.SetTop(border, box.Top); _canvas.Children.Add(border);
         }
+        _rendered = rendered;
+        if (!_renderPending) { _renderPending = true; CompositionTarget.Rendering += OnRendering; }
     }
 }

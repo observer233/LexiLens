@@ -63,6 +63,7 @@ public class SpatialTests
         await session.RunAsync(ct.Token, once: true);
         Assert.Equal(2, calls.Count); Assert.DoesNotContain(calls, x => x.Contains("\n"));
         Assert.Equal("译:Quest", last.Single(x => x.Source == "Quest").Translation);
+        Assert.All(last, x => Assert.True(x.ReadyTimestamp > 0));
         Assert.Equal(blocks[1].Bounds, last.Single(x => x.Source == "Dialogue").Bounds);
     }
 
