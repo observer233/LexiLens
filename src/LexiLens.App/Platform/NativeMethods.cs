@@ -25,6 +25,8 @@ internal static class NativeMethods
     internal delegate bool WindowCallback(nint hwnd, nint data);
     [DllImport("user32.dll")] internal static extern bool EnumWindows(WindowCallback callback, nint data);
     [DllImport("user32.dll")] internal static extern bool IsWindowVisible(nint hwnd);
+    [DllImport("user32.dll")] internal static extern bool IsWindow(nint hwnd);
+    [DllImport("user32.dll")] internal static extern uint GetDpiForWindow(nint hwnd);
     [DllImport("user32.dll")] internal static extern bool IsIconic(nint hwnd);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern int GetWindowText(nint hwnd, StringBuilder text, int count);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern int GetClassName(nint hwnd, StringBuilder text, int count);
@@ -47,6 +49,11 @@ internal static class NativeMethods
     [DllImport("gdi32.dll")] internal static extern int SetStretchBltMode(nint dc, int mode);
 
     internal static bool ExcludeFromCapture(Window window) => SetWindowDisplayAffinity(new WindowInteropHelper(window).Handle, 0x11);
+
+    // WGC HWND surfaces use the rendered window bounds, excluding the invisible
+    // resize border. PerMonitorV2 makes these physical screen pixels.
+    internal static bool TryGetCaptureBounds(nint hwnd, out Rect bounds) =>
+        DwmGetWindowAttribute(hwnd, 9, out bounds, 16) == 0 || GetWindowRect(hwnd, out bounds);
 
     internal static void SetClickThrough(Window window, bool enabled)
     {
@@ -92,6 +99,7 @@ internal static class NativeMethods
     internal static byte[] Capture(CaptureRegion region, int maxDimension, out int width, out int height)
     {
         if (!region.IsValid) throw new ArgumentException("识别区域无效，请重新框选。");
+        if ((long)region.Width * region.Height * 4 > 134_217_728) throw new ArgumentException("捕获区域过大，请缩小到字幕区域（最多 128 MiB BGRA）。");
         var scale = Math.Min(1.0, (double)maxDimension / Math.Max(region.Width, region.Height));
         width = Math.Max(1, (int)Math.Round(region.Width * scale));
         height = Math.Max(1, (int)Math.Round(region.Height * scale));

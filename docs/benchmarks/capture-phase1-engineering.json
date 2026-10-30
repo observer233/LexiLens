@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "recordedLocalDate": "2026-10-30",
+  "evidenceKind": "engineering-smoke-no-game-no-service",
+  "operatingSystem": "Microsoft Windows NT 10.0.26200.0",
+  "stopwatchFrequency": 10000000,
+  "engineeringChecksPassed": true,
+  "checks": {
+    "gdiNativeRoi": true,
+    "gdiPattern": true,
+    "wgcNativeRoi": true,
+    "wgcCompositorTimestamp": true,
+    "wgcPattern": true,
+    "gdiWgcRgbAgreement": true,
+    "exclusionApiAccepted": true,
+    "overlayClickThroughAndNoActivateStyles": true,
+    "foregroundUnchangedByShows": true,
+    "gdiExclusionPixelsUnchanged": true,
+    "wgcOwnOverlayPixelsUnchanged": true,
+    "staticFrameReusableWithoutFakeTimestamp": true,
+    "wgcMoveWithoutResizeAligned": true,
+    "gdiMoveResizeAligned": true,
+    "wgcMoveResizeAligned": true,
+    "moveResizeRgbAgreement": true,
+    "dpiBefore": 96,
+    "dpiAfter": 96,
+    "actualDpiChangeExercised": false,
+    "productOverlayShortLabelRendered": true,
+    "productOverlayInitialBoundsAligned": true,
+    "productOverlayGdiExcluded": true,
+    "productOverlayWgcExcluded": true,
+    "productOverlayMoveResizeBoundsAligned": true,
+    "productOverlayLongLabelLimitReported": true,
+    "productOverlayClippedLabelNotCountedAsEffective": true,
+    "productOverlayHiddenLabelNotCountedAsEffective": true,
+    "cancelHonored": true,
+    "closedTargetRejected": true
+  },
+  "geometry": {
+    "initialWindowPixels": [
+      640,
+      360
+    ],
+    "initialRoiPixels": [
+      512,
+      108
+    ],
+    "resizedWindowPixels": [
+      760,
+      440
+    ],
+    "resizedRoiPixels": [
+      608,
+      132
+    ],
+    "dpiBefore": 96,
+    "dpiAfter": 96,
+    "actualDpiChangeExercised": false
+  },
+  "captureSamples": [
+    {
+      "backend": "WGC",
+      "phase": "cold",
+      "startupMs": 178.8437,
+      "FrameWaitMs": 6.9477,
+      "CaptureMs": 3.2549,
+      "frameAgeMs": 4.3439,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 512,
+      "Height": 108
+    },
+    {
+      "backend": "WGC",
+      "phase": "static-repeat",
+      "startupMs": null,
+      "FrameWaitMs": 0.0252,
+      "CaptureMs": 0,
+      "frameAgeMs": 302.4035,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": true,
+      "Width": 512,
+      "Height": 108
+    },
+    {
+      "backend": "WGC",
+      "phase": "resize",
+      "startupMs": null,
+      "FrameWaitMs": 0.0256,
+      "CaptureMs": 0.8813,
+      "frameAgeMs": 116.243,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 7.1534,
+      "frameAgeMs": 7.7935,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.027,
+      "CaptureMs": 0.5982,
+      "frameAgeMs": 115.7356,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 4.1357,
+      "frameAgeMs": 4.6631,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.027,
+      "CaptureMs": 0.489,
+      "frameAgeMs": 127.6299,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 10.6987,
+      "frameAgeMs": 11.3003,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.0321,
+      "CaptureMs": 0.5545,
+      "frameAgeMs": 132.4327,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 4.9046,
+      "frameAgeMs": 5.4451,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.0168,
+      "CaptureMs": 0.5119,
+      "frameAgeMs": 127.1723,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 7.8648,
+      "frameAgeMs": 8.4167,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.0211,
+      "CaptureMs": 0.5175,
+      "frameAgeMs": 128.007,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 9.7822,
+      "frameAgeMs": 10.5281,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.0324,
+      "CaptureMs": 0.7006,
+      "frameAgeMs": 128.0774,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 7.0612,
+      "frameAgeMs": 7.6112,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.0186,
+      "CaptureMs": 0.5181,
+      "frameAgeMs": 121.5978,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "GDI",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0,
+      "CaptureMs": 7.8918,
+      "frameAgeMs": 8.4501,
+      "DroppedFrames": 0,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    },
+    {
+      "backend": "WGC",
+      "phase": "warm",
+      "startupMs": null,
+      "FrameWaitMs": 0.0295,
+      "CaptureMs": 0.5172,
+      "frameAgeMs": 122.1616,
+      "DroppedFrames": 1,
+      "IsRepeatedFrame": false,
+      "Width": 608,
+      "Height": 132
+    }
+  ],
+  "overlayEvents": [
+    {
+      "Code": "OVERLAY_VISIBLE",
+      "State": 1,
+      "FrameAgeMilliseconds": 69.4736,
+      "FrameVerificationAgeMilliseconds": 69.6367,
+      "BlockId": 1,
+      "Revision": 1
+    },
+    {
+      "Code": "OVERLAY_VISIBLE",
+      "State": 1,
+      "FrameAgeMilliseconds": 1.4413,
+      "FrameVerificationAgeMilliseconds": 1.4425,
+      "BlockId": 1,
+      "Revision": 2
+    },
+    {
+      "Code": "OVERLAY_LAYOUT_LIMIT",
+      "State": 4,
+      "FrameAgeMilliseconds": 42.2277,
+      "FrameVerificationAgeMilliseconds": null,
+      "BlockId": 1,
+      "Revision": 3
+    }
+  ],
+  "actualPaddlePatternReplay": {
+    "diagnosticRunCompleted": true,
+    "ocrEmptyResults": 2,
+    "httpRequests": 0,
+    "characterErrorRate": null,
+    "translationAccuracy": null
+  },
+  "limitations": [
+    "No real game, OCR accuracy, translation request, subtitle miss/stale rate or game frame-time conclusion.",
+    "No actual hardware hotkey or drag selection; no exclusive fullscreen/HDR/mixed-DPI coverage.",
+    "WGC dropped count covers application coalescing/resize only; compositor internal loss is not observable.",
+    "Frame age uses WGC compositor QPC; GDI uses acquisition start and cannot measure compositor age."
+  ],
+  "finalCoreTests": {
+    "passed": 103,
+    "failed": 0,
+    "skipped": 0
+  },
+  "portableVerification": {
+    "version": "0.6.0-capture.1",
+    "selfContainedSingleFile": true,
+    "smokePassed": true,
+    "checks": {
+      "geometryHorizontalBounds": true,
+      "geometryRightAngleEquivalentBounds": true,
+      "geometryDiagonalProjectedBounds": true,
+      "geometryActualDetectionOrderRegression": true,
+      "gdiNativeRoi": true,
+      "gdiPattern": true,
+      "initialPhysicalWindow": {
+        "X": 40,
+        "Y": 50,
+        "Width": 640,
+        "Height": 360,
+        "IsValid": true
+      },
+      "initialPhysicalRoi": {
+        "X": 104,
+        "Y": 266,
+        "Width": 512,
+        "Height": 108,
+        "IsValid": true
+      },
+      "wgcNativeRoi": true,
+      "wgcCompositorTimestamp": true,
+      "wgcPattern": true,
+      "gdiWgcRgbAgreement": true,
+      "exclusionApiAccepted": true,
+      "overlayClickThroughAndNoActivateStyles": true,
+      "foregroundUnchangedByShows": true,
+      "gdiExclusionPixelsUnchanged": true,
+      "wgcOwnOverlayPixelsUnchanged": true,
+      "staticFrameReusableWithoutFakeTimestamp": true,
+      "wgcMoveWithoutResizeAligned": true,
+      "movedPhysicalWindow": {
+        "X": 112,
+        "Y": 105,
+        "Width": 760,
+        "Height": 440,
+        "IsValid": true
+      },
+      "movedPhysicalRoi": {
+        "X": 188,
+        "Y": 369,
+        "Width": 608,
+        "Height": 132,
+        "IsValid": true
+      },
+      "gdiMoveResizeAligned": true,
+      "wgcMoveResizeAligned": true,
+      "moveResizeRgbAgreement": true,
+      "dpiBefore": 96,
+      "dpiAfter": 96,
+      "actualDpiChangeExercised": false,
+      "productOverlayShortLabelRendered": true,
+      "productOverlayInitialBoundsAligned": true,
+      "productOverlayGdiExcluded": true,
+      "productOverlayWgcExcluded": true,
+      "productOverlayMoveResizeBoundsAligned": true,
+      "productOverlayLongLabelLimitReported": true,
+      "productOverlayClippedLabelNotCountedAsEffective": true,
+      "productOverlayHiddenLabelNotCountedAsEffective": true,
+      "cancelHonored": true,
+      "closedTargetRejected": true
+    },
+    "realGameFrameReplayCompleted": true,
+    "translationEnabled": false,
+    "packageIdentity": false,
+    "engineMode": "Enhanced",
+    "events": {
+      "CAPTURE_SOURCE_STARTUP": 1,
+      "CAPTURE_DIAGNOSTIC_START": 1,
+      "CAPTURE_OK": 74,
+      "FRAME_WAIT": 74,
+      "FRAME_DEQUEUE": 12,
+      "WINDOWS_OCR_SUPPORT": 1,
+      "OCR_START": 12,
+      "CAPTURE_BACKLOG": 4,
+      "OCR_OK": 11,
+      "OCR_PREVIEW_VISIBLE": 11,
+      "OVERLAY_LAYOUT_LIMIT": 2,
+      "CAPTURE_DIAGNOSTIC_STOP": 1
+    },
+    "ocrQuality": {
+      "annotatedFramesRead": 11,
+      "skippedOversizedSamples": 0,
+      "referenceCharacters": 561,
+      "characterErrors": 25,
+      "sampledFrameCer": 0.044563279857397504,
+      "exactFrames": 0,
+      "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; nonblank references; repeated reads of a frame counted once"
+    },
+    "spatialOutputQuality": {
+      "annotatedFramesRead": 11,
+      "skippedOversizedSamples": 0,
+      "referenceCharacters": 561,
+      "characterErrors": 25,
+      "sampledFrameCer": 0.044563279857397504,
+      "exactFrames": 0,
+      "normalization": "TextProcessing.Normalize; case-sensitive; UTF-16 code units; nonblank references; repeated reads of a frame counted once"
+    },
+    "scope": "Same local game recording; packaging/OCR/timing check only; no HTTP or clean-system test."
+  }
+}

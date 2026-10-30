@@ -1,5 +1,7 @@
 using System.IO;
 using System.Windows;
+using System.Text.Json;
+using LexiLens.Core;
 
 namespace LexiLens.App;
 
@@ -13,6 +15,29 @@ public partial class App : Application
             Shutdown(); return;
         }
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--diagnostics-capture-smoke")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Dispatcher.InvokeAsync(async () => { await CaptureSmokeDiagnostics.RunAsync(Path.GetFullPath(e.Args[1])); Shutdown(); });
+            return;
+        }
+        if (e.Args.Length == 2 && e.Args[0] == "--diagnostics-capture")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Dispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    var options = JsonSerializer.Deserialize<CaptureDiagnosticsOptions>(File.ReadAllText(e.Args[1]), CaptureDiagnosticsOptions.Json)
+                        ?? throw new InvalidDataException("诊断选项为空。");
+                    var store = new LocalStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LexiLens"));
+                    await CaptureDiagnostics.RunAsync(options, store.Load("settings.json", new AppSettings()).Sanitize(), null);
+                }
+                catch (Exception ex) { File.WriteAllText(Path.GetFullPath(e.Args[1]) + ".error.txt", ex.GetType().Name + ": " + ex.Message); }
+                finally { Shutdown(); }
+            });
+            return;
+        }
         DispatcherUnhandledException += (_, args) =>
         {
             MessageBox.Show(args.Exception.Message, "LexiLens · 遇到问题", MessageBoxButton.OK, MessageBoxImage.Error);

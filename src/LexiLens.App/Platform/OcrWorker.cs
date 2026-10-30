@@ -18,6 +18,8 @@ internal sealed class OcrWorker(bool stallForDiagnostics = false, int initialTim
 
     internal async Task<Recognition> ReadAsync(byte[] bytes, int width, int height, OcrImageMode mode, CancellationToken ct, bool fast = false)
     {
+        if (width is < 1 or > 16384 || height is < 1 or > 16384 || bytes.Length > 134_217_728 || bytes.LongLength != (long)width * height * 4)
+            throw new ArgumentException("OCR 区域过大或像素无效，请缩小到字幕区域（最多 128 MiB BGRA）。");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(_process == null ? TimeSpan.FromMilliseconds(initialTimeoutMs) : TimeSpan.FromSeconds(8));
         try
@@ -74,7 +76,7 @@ internal sealed class OcrWorker(bool stallForDiagnostics = false, int initialTim
             try { length = input.ReadInt32(); } catch (EndOfStreamException) { break; }
             var width = input.ReadInt32(); var height = input.ReadInt32(); var mode = (OcrImageMode)input.ReadInt32();
             var fast = input.ReadBoolean();
-            if (width is < 1 or > 2560 || height is < 1 or > 2560 || length != checked(width * height * 4) || !Enum.IsDefined(mode)) return;
+            if (width is < 1 or > 16384 || height is < 1 or > 16384 || length is < 4 or > 134_217_728 || length != (long)width * height * 4 || !Enum.IsDefined(mode)) return;
             var bytes = input.ReadBytes(length); if (bytes.Length != length) return;
             try { output.WriteLine(JsonSerializer.Serialize(new WorkerReply(ocr.Recognize(bytes, width, height, mode, CancellationToken.None, fast), null))); }
             catch (Exception ex) { output.WriteLine(JsonSerializer.Serialize(new WorkerReply(null, ex.GetType().Name))); }
